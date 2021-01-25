@@ -16,59 +16,63 @@ function Kart() {
 	var tamanhoEixoPneu = { raio: tamanhoBico.z * 0.15, altura: ((tamanhoAsaDianteira.x - tamanhoBico.x) * 0.5) };
 	var tamanhoPneu = { raioTorus: 0.3, raioTubo: tamanhoEixoPneu.altura * 0.25 };
 
-	// Corpo principal
-	var baseCockpit = criarBaseCockpit();
-	var limiteFrontalCockpit = criarLimiteDianteiroCockpit();
-	var limiteTraseiroCockpit = criarLimiteTraseiroCockpit();
-	var limiteLateralDireitoCockpit = criarLimiteLateralDireitoCockpit();
-	var limiteLateralEsquerdoCockpit = criarLimiteLateralEsquerdoCockpit();
-	var baseBanco = criarBaseBanco();
-	var encostoBanco = criarEncostoBanco();
+	return criarKart();
 
-	var bico = criarBico();
-	var asaDianteira = criarAsaDianteira();
-	var ligacaoTraseira = criarLigacaoTraseira();
-	var baseDireitaAsaTraseira = criarBaseDireitaAsaTraseira();
-	var baseEsquerdaAsaTraseira = criarBaseEsquerdaAsaTraseira();
-	var asaTraseira = criarAsaTraseira();
+	function criarKart() {
+		// Corpo principal
+		var baseCockpit = criarBaseCockpit();
+		var limiteFrontalCockpit = criarLimiteDianteiroCockpit();
+		var limiteTraseiroCockpit = criarLimiteTraseiroCockpit();
+		var limiteLateralDireitoCockpit = criarLimiteLateralDireitoCockpit();
+		var limiteLateralEsquerdoCockpit = criarLimiteLateralEsquerdoCockpit();
+		var baseBanco = criarBaseBanco();
+		var encostoBanco = criarEncostoBanco();
 
-	// Eixos dos pneus
-	var eixoPneuDianteiroDireito = criarEixoPneuDianteiroDireito();
-	var eixoPneuDianteiroEsquerdo = criarEixoPneuDianteiroEsquerdo();
-	var eixoPneuTraseiroDireito = criarEixoPneuTraseiroDireito();
-	var eixoPneuTraseiroEsquerdo = criarEixoPneuTraseiroEsquerdo();
+		var bico = criarBico();
+		var asaDianteira = criarAsaDianteira();
+		var ligacaoTraseira = criarLigacaoTraseira();
+		var baseDireitaAsaTraseira = criarBaseDireitaAsaTraseira();
+		var baseEsquerdaAsaTraseira = criarBaseEsquerdaAsaTraseira();
+		var asaTraseira = criarAsaTraseira();
 
-	// Pneus
-	var pneuDianteiroDireito = criarPneuDianteiroDireito();
-	var pneuDianteiroEsquerdo = criarPneuDianteiroEsquerdo();
-	var pneuTraseiroDireito = criarPneuTraseiroDireito();
-	var pneuTraseiroEsquerdo = criarPneuTraseiroEsquerdo();
+		// Eixos dos pneus
+		var eixoPneuDianteiroDireito = criarEixoPneuDianteiroDireito();
+		var eixoPneuDianteiroEsquerdo = criarEixoPneuDianteiroEsquerdo();
+		var eixoPneuTraseiroDireito = criarEixoPneuTraseiroDireito();
+		var eixoPneuTraseiroEsquerdo = criarEixoPneuTraseiroEsquerdo();
 
-	// Junção das partes
-	baseCockpit.add(bico);
-	baseCockpit.add(limiteFrontalCockpit);
-	baseCockpit.add(limiteTraseiroCockpit);
-	baseCockpit.add(limiteLateralDireitoCockpit);
-	baseCockpit.add(limiteLateralEsquerdoCockpit);
-	baseCockpit.add(baseBanco);
-	baseCockpit.add(encostoBanco);
+		// Pneus
+		var pneuDianteiroDireito = criarPneuDianteiroDireito();
+		var pneuDianteiroEsquerdo = criarPneuDianteiroEsquerdo();
+		var pneuTraseiroDireito = criarPneuTraseiroDireito();
+		var pneuTraseiroEsquerdo = criarPneuTraseiroEsquerdo();
 
-	bico.add(asaDianteira);
-	bico.add(eixoPneuDianteiroDireito);
-	bico.add(eixoPneuDianteiroEsquerdo);
-	eixoPneuDianteiroDireito.add(pneuDianteiroDireito);
-	eixoPneuDianteiroEsquerdo.add(pneuDianteiroEsquerdo);
+		// Junção das partes
+		baseCockpit.add(bico);
+		baseCockpit.add(limiteFrontalCockpit);
+		baseCockpit.add(limiteTraseiroCockpit);
+		baseCockpit.add(limiteLateralDireitoCockpit);
+		baseCockpit.add(limiteLateralEsquerdoCockpit);
+		baseCockpit.add(baseBanco);
+		baseCockpit.add(encostoBanco);
 
-	baseCockpit.add(ligacaoTraseira);
-	ligacaoTraseira.add(eixoPneuTraseiroDireito);
-	ligacaoTraseira.add(eixoPneuTraseiroEsquerdo);
-	eixoPneuTraseiroDireito.add(pneuTraseiroDireito);
-	eixoPneuTraseiroEsquerdo.add(pneuTraseiroEsquerdo);
-	ligacaoTraseira.add(baseDireitaAsaTraseira);
-	ligacaoTraseira.add(baseEsquerdaAsaTraseira);
-	ligacaoTraseira.add(asaTraseira);
+		bico.add(asaDianteira);
+		bico.add(eixoPneuDianteiroDireito);
+		bico.add(eixoPneuDianteiroEsquerdo);
+		eixoPneuDianteiroDireito.add(pneuDianteiroDireito);
+		eixoPneuDianteiroEsquerdo.add(pneuDianteiroEsquerdo);
 
-	return baseCockpit;
+		baseCockpit.add(ligacaoTraseira);
+		ligacaoTraseira.add(eixoPneuTraseiroDireito);
+		ligacaoTraseira.add(eixoPneuTraseiroEsquerdo);
+		eixoPneuTraseiroDireito.add(pneuTraseiroDireito);
+		eixoPneuTraseiroEsquerdo.add(pneuTraseiroEsquerdo);
+		ligacaoTraseira.add(baseDireitaAsaTraseira);
+		ligacaoTraseira.add(baseEsquerdaAsaTraseira);
+		ligacaoTraseira.add(asaTraseira);
+
+		return baseCockpit;
+	}
 
 	// Funções auxiliares para criação dos sólidos
 	function criarBaseCockpit() {
@@ -274,13 +278,48 @@ function Kart() {
 	}
 }
 
+function Camera(kart) {
+	var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	camera.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
+	camera.lookAt(kart.position);
+	camera.up.set(0, 0, 1);
+
+	return {
+		cameraPerspectiva: camera,
+		update: function () {
+			camera.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
+			camera.lookAt(kart.position);
+		}
+	}
+}
+
+function Iluminacao(kart) {
+	var holofote = new THREE.SpotLight(0xffffff);
+	holofote.position.copy(new THREE.Vector3(kart.position.x + 7, kart.position.y + 7, kart.position.z + 7));
+	holofote.shadow.mapSize.width = 2048;
+	holofote.shadow.mapSize.height = 2048;
+	holofote.shadow.camera.fov = 60;
+	holofote.castShadow = true;
+	holofote.decay = 2;
+	holofote.penumbra = 0.05;
+	holofote.name = "Holofote";
+
+	var luzAmbiente = new THREE.AmbientLight(0x343434);
+	luzAmbiente.name = "LuzAmbiente";
+
+	return {
+		holofote: holofote,
+		luzAmbiente: luzAmbiente,
+		update: function () {
+			holofote.position.copy(new THREE.Vector3(kart.position.x + 7, kart.position.y + 7, kart.position.z + 7));
+		}
+	}
+}
+
 function main() {
 	var stats = initStats();          // To show FPS information
 	var scene = new THREE.Scene();    // Create main scene
 	var renderer = initRenderer();    // View function in util/utils
-	var camera = initCamera(new THREE.Vector3(0, -30, 15)); // Init camera in this position
-
-	var light = initDefaultLighting(scene, new THREE.Vector3(7, 7, 7));
 
 	var velocidadeMax = 20;
 	var aceleracao = 1;
@@ -289,15 +328,12 @@ function main() {
 
 	var keyboard = new KeyboardState();
 
-	// Enable mouse rotation, pan, zoom etc.
-	var trackballControls = new THREE.TrackballControls(camera, renderer.domElement);
-
 	// Show axes (parameter is size of each axis)
 	var axesHelper = new THREE.AxesHelper(12);
 	scene.add(axesHelper);
 
 	// create the ground plane
-	var planeGeometry = new THREE.PlaneGeometry(20, 20);
+	var planeGeometry = new THREE.PlaneGeometry(20, 10000);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
 	var planeMaterial = new THREE.MeshBasicMaterial({
 		color: "rgba(150, 150, 150)",
@@ -309,9 +345,17 @@ function main() {
 
 	// create the kart
 	var kart = new Kart();
-
-	// add the kart to the scene
 	scene.add(kart);
+
+	// Initialize camera
+	var camera = new Camera(kart);
+
+	var iluminacao = new Iluminacao(kart);
+	scene.add(iluminacao.holofote);
+	scene.add(iluminacao.luzAmbiente);
+
+	// Enable mouse rotation, pan, zoom etc.
+	var trackballControls = new THREE.TrackballControls(camera.cameraPerspectiva, renderer.domElement);
 
 	// Use this to show information onscreen
 	controls = new InfoBox();
@@ -326,7 +370,7 @@ function main() {
 	// Listen window size changes
 	window.addEventListener(
 		'resize',
-		function () { onWindowResize(camera, renderer) },
+		function () { onWindowResize(camera.cameraPerspectiva, renderer) },
 		false
 	);
 
@@ -334,33 +378,35 @@ function main() {
 
 	function keyboardUpdate() {
 		keyboard.update();
-	
+
 		if (keyboard.pressed("W") && velocidade < velocidadeMax) tempo += 0.1;
-		if (keyboard.pressed("S") && velocidade*-1 < velocidadeMax) tempo -= 0.1;
+		if (keyboard.pressed("S") && velocidade * -1 < velocidadeMax) tempo -= 0.1;
 		if (keyboard.pressed("A") && velocidade != 0) kart.rotation.z += 0.01;
 		if (keyboard.pressed("D") && velocidade != 0) kart.rotation.z -= 0.01;
-		
+
 		if (tempo <= 0) tempo = 0;
-	
-		if ( keyboard.pressed("space") ){
+
+		if (keyboard.pressed("space")) {
 			kart.rotation.z = 0;
 			tempo = 0;
 			kart.position.set(0.0, 0.0, 0.0);
 		}
 
 		//v = v0 + a*t
-		velocidade = aceleracao*tempo;
-		distanciaPercorrer = velocidade*tamanhoPasso;
-	
-		kart.translateY( distanciaPercorrer);
+		velocidade = aceleracao * tempo;
+		distanciaPercorrer = velocidade * tamanhoPasso;
+
+		kart.translateY(distanciaPercorrer);
 	}
 
 	function render() {
 		stats.update(); // Update FPS
 		trackballControls.update(); // Enable mouse movements
+		camera.update();
+		iluminacao.update();
 		keyboardUpdate();
 		requestAnimationFrame(render);
-		renderer.render(scene, camera) // Render scene
+		renderer.render(scene, camera.cameraPerspectiva) // Render scene
 	}
 }
 
