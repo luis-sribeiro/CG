@@ -22,6 +22,10 @@ function Kart() {
 	var tempo = 0;
 	var tamanhoPasso = 0.02;
 
+	//Teste movimento pneu
+	var pneuDianteiroDireito;
+	var pneuDianteiroEsquerdo;
+
 	var objetoThreeJs = criarKart();
 
 	return {
@@ -39,13 +43,15 @@ function Kart() {
 		virarADireita: function () {
 			if (velocidadeAtual != 0)
 				objetoThreeJs.rotation.z += 0.01;
+				pneuDianteiroDireito.rotation.z += 0.01;
+				pneuDianteiroEsquerdo.rotation.z += 0.01;
 		},
 		virarAEsquerda: function () {
 			if (velocidadeAtual != 0)
 				objetoThreeJs.rotation.z -= 0.01;
 		},
 		atualizarPosicaoNaCena: function () {
-			//v = v0 + a*t
+			//Equação da vecolidade com aceleração constante: v = v0 + a*t
 			velocidadeAtual = aceleracao * tempo;
 			var distanciaPercorrer = velocidadeAtual * tamanhoPasso;
 
@@ -82,8 +88,8 @@ function Kart() {
 		var eixoPneuTraseiroEsquerdo = criarEixoPneuTraseiroEsquerdo();
 
 		// Pneus
-		var pneuDianteiroDireito = criarPneuDianteiroDireito();
-		var pneuDianteiroEsquerdo = criarPneuDianteiroEsquerdo();
+		pneuDianteiroDireito = criarPneuDianteiroDireito();
+		pneuDianteiroEsquerdo = criarPneuDianteiroEsquerdo();
 		var pneuTraseiroDireito = criarPneuTraseiroDireito();
 		var pneuTraseiroEsquerdo = criarPneuTraseiroEsquerdo();
 
@@ -372,12 +378,23 @@ function main() {
 	var planeGeometry = new THREE.PlaneGeometry(20, 10000);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
 	var planeMaterial = new THREE.MeshBasicMaterial({
-		color: "rgba(150, 150, 150)",
+		//color: "rgba(150, 150, 150)",
+		//side: THREE.DoubleSide,
+		color: "rgba(20, 30, 110)",
 		side: THREE.DoubleSide,
+		polygonOffset: true,
+		polygonOffsetFactor: 1, // positive value pushes polygon further away
+		polygonOffsetUnits: 1
 	});
 	var plane = new THREE.Mesh(planeGeometry, planeMaterial);
 	// add the plane to the scene
 	scene.add(plane);
+
+
+	var wireframe = new THREE.WireframeGeometry( planeGeometry );
+	var line = new THREE.LineSegments( wireframe );
+	line.material.color.setStyle( "rgb(180, 180, 180)" );  
+	scene.add(line);
 
 	// create the kart
 	var kart = new Kart();
@@ -394,6 +411,7 @@ function main() {
 	var trackballControls = new THREE.TrackballControls(camera.cameraPerspectiva, renderer.domElement);
 
 	// Use this to show information onscreen
+	/*
 	controls = new InfoBox();
 	controls.add("Basic Scene");
 	controls.addParagraph();
@@ -402,6 +420,7 @@ function main() {
 	controls.add("* Right button to translate (pan)");
 	controls.add("* Scroll to zoom in/out.");
 	controls.show();
+	*/
 
 	// Listen window size changes
 	window.addEventListener(
@@ -415,10 +434,10 @@ function main() {
 	function keyboardUpdate() {
 		keyboard.update();
 
-		if (keyboard.pressed("W")) kart.acelerar();
-		if (keyboard.pressed("S")) kart.frear();
-		if (keyboard.pressed("A")) kart.virarADireita();
-		if (keyboard.pressed("D")) kart.virarAEsquerda();
+		if (keyboard.pressed("up")) kart.acelerar();
+		if (keyboard.pressed("down")) kart.frear();
+		if (keyboard.pressed("left")) kart.virarADireita();
+		if (keyboard.pressed("right")) kart.virarAEsquerda();
 		if (keyboard.pressed("space")) kart.reset();
 
 		kart.atualizarPosicaoNaCena();
