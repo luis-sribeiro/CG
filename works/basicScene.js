@@ -338,16 +338,24 @@ function Kart() {
 }
 
 function Camera(kart) {
-	var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-	camera.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
-	camera.lookAt(kart.position);
-	camera.up.set(0, 0, 1);
+	var cameraModoDeJogo = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+	cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
+	cameraModoDeJogo.lookAt(kart.position);
+	cameraModoDeJogo.up.set(0, 0, 1);
+
+	var modoCamera = 'jogo';
 
 	return {
-		cameraPerspectiva: camera,
+		cameraPerspectiva: cameraModoDeJogo,
+		modo: modoCamera,
+		trocarModoCamera: function () {
+			modoCamera = modoCamera === 'jogo' ? 'inspecao' : 'jogo';
+		},
 		update: function () {
-			camera.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
-			camera.lookAt(kart.position);
+			if (modoCamera === 'jogo') {
+				cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
+				cameraModoDeJogo.lookAt(kart.position);
+			}
 		}
 	}
 }
@@ -421,17 +429,16 @@ function main() {
 	// Enable mouse rotation, pan, zoom etc.
 	var trackballControls = new THREE.TrackballControls(camera.cameraPerspectiva, renderer.domElement);
 
-	// Use this to show information onscreen
-	/*
-	controls = new InfoBox();
-	controls.add("Basic Scene");
-	controls.addParagraph();
-	controls.add("Use mouse to interact:");
-	controls.add("* Left button to rotate");
-	controls.add("* Right button to translate (pan)");
-	controls.add("* Scroll to zoom in/out.");
-	controls.show();
-	*/
+
+	var controls = new function () {
+		this.trocarModoCamera = function () {
+			camera.trocarModoCamera();
+		}
+	};
+
+	var gui = new dat.GUI();
+	gui.add(controls, 'trocarModoCamera').name("Trocar câmera");
+
 
 	// Listen window size changes
 	window.addEventListener(
