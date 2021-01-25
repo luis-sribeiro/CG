@@ -286,9 +286,6 @@ function main() {
 	var aceleracao = 1;
 	var tempo = 0;
 	var tamanhoPasso = 0.02;
-	//v = v0 + a*t
-	var velocidade = aceleracao*tempo;
-	var distanciaPercorrer = velocidade*tamanhoPasso;
 
 	var keyboard = new KeyboardState();
 
@@ -340,18 +337,20 @@ function main() {
 	
 		if (keyboard.pressed("W") && velocidade < velocidadeMax) tempo += 0.1;
 		if (keyboard.pressed("S") && velocidade*-1 < velocidadeMax) tempo -= 0.1;
+		if (keyboard.pressed("A") && velocidade != 0) kart.rotation.z += 0.01;
+		if (keyboard.pressed("D") && velocidade != 0) kart.rotation.z -= 0.01;
 		
 		if (tempo <= 0) tempo = 0;
 	
+		if ( keyboard.pressed("space") ){
+			kart.rotation.z = 0;
+			tempo = 0;
+			kart.position.set(0.0, 0.0, 0.0);
+		}
+
+		//v = v0 + a*t
 		velocidade = aceleracao*tempo;
 		distanciaPercorrer = velocidade*tamanhoPasso;
-		
-		if ( keyboard.pressed("space") ){
-			tempo = 0;
-			velocidade = 0;
-			distanciaPercorrer = 0;
-			kart.position.set(0.0, 0.0, 2.0);
-		}
 	
 		kart.translateY( distanciaPercorrer);
 	}
