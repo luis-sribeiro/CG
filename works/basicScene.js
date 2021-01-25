@@ -1,5 +1,8 @@
 function Kart() {
-	var material = new THREE.MeshPhongMaterial({ color: 'rgb(100,255,100)' });
+	//var material = new THREE.MeshPhongMaterial({ color: 'rgb(100,255,100)' });
+	var material = new THREE.MeshPhongMaterial({ color: 'rgb(255,255,255)' });
+	var materialRodas = new THREE.MeshPhongMaterial({ color: 'rgb(35,23,9)' });
+	var materialEixos = new THREE.MeshPhongMaterial({ color: 'rgb(80,80,80)' });
 	var matrizRotacao = new THREE.Matrix4();
 
 	var tamanhoBaseCockpit = { x: 2.5, y: 3.5, z: 0.2 };
@@ -26,8 +29,8 @@ function Kart() {
 	// Controle do ângulo em que o kart fará curvas
 	var pneuDianteiroDireito;
 	var pneuDianteiroEsquerdo;
-	var anguloMaximo = Math.PI * 0.2;
-	var anguloMinimo = Math.PI * -0.2;
+	var anguloMaximo = Math.PI * 0.1;
+	var anguloMinimo = Math.PI * -0.1;
 	var angulo = 0;
 
 	var objetoThreeJs = criarKart();
@@ -48,17 +51,17 @@ function Kart() {
 			if (angulo < anguloMinimo)
 				return;
 
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.02));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.02));
-			angulo -= 0.02;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.01));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.01));
+			angulo -= 0.01;
 		},
 		virarAEsquerda: function () {
 			if (angulo > anguloMaximo)
 				return;
 
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.02));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.02));
-			angulo += 0.02;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.01));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.01));
+			angulo += 0.01;
 		},
 		atualizarPosicao: function () {
 			// Equação da velocidade com aceleração constante: v = v0 + a*t
@@ -68,11 +71,14 @@ function Kart() {
 			objetoThreeJs.translateY(distanciaPercorrer);
 
 			if (velocidadeAtual > 0)
-				objetoThreeJs.rotation.z += angulo * 0.02;
+				objetoThreeJs.rotation.z += angulo * 0.01;
 		},
 		reset: function () {
 			objetoThreeJs.rotation.z = 0;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
 			tempo = 0;
+			angulo = 0;
 			objetoThreeJs.position.set(0.0, 0.0, 0.0);
 		}
 	};
@@ -322,7 +328,7 @@ function Kart() {
 
 	function criarCilindro(tamanho) {
 		var geometria = new THREE.CylinderGeometry(tamanho.raio, tamanho.raio, tamanho.altura, 32);
-		var cilindro = new THREE.Mesh(geometria, material);
+		var cilindro = new THREE.Mesh(geometria, materialEixos);
 		cilindro.matrixAutoUpdate = false;
 		cilindro.matrix.identity();
 		return cilindro;
@@ -330,7 +336,7 @@ function Kart() {
 
 	function criarTorus(tamanho) {
 		var geometria = new THREE.TorusGeometry(tamanho.raioTorus, tamanho.raioTubo, 50, 50);
-		var torus = new THREE.Mesh(geometria, material);
+		var torus = new THREE.Mesh(geometria, materialRodas);
 		torus.matrixAutoUpdate = false;
 		torus.matrix.identity();
 		return torus;
@@ -456,7 +462,7 @@ function main() {
 		if (keyboard.pressed("down")) kart.frear();
 		if (keyboard.pressed("left")) kart.virarAEsquerda();
 		if (keyboard.pressed("right")) kart.virarADireita();
-		if (keyboard.pressed("space")) kart.reset();
+		if (keyboard.pressed("R")) kart.reset();
 
 		kart.atualizarPosicao();
 	}
