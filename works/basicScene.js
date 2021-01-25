@@ -16,7 +16,47 @@ function Kart() {
 	var tamanhoEixoPneu = { raio: tamanhoBico.z * 0.15, altura: ((tamanhoAsaDianteira.x - tamanhoBico.x) * 0.5) };
 	var tamanhoPneu = { raioTorus: 0.3, raioTubo: tamanhoEixoPneu.altura * 0.25 };
 
-	return criarKart();
+	var velocidadeMaxima = 20;
+	var velocidadeAtual = 0;
+	var aceleracao = 1;
+	var tempo = 0;
+	var tamanhoPasso = 0.02;
+
+	var objetoThreeJs = criarKart();
+
+	return {
+		objetoThreeJs: objetoThreeJs,
+		acelerar: function () {
+			if (velocidadeAtual < velocidadeMaxima)
+				tempo += 0.1;
+		},
+		frear: function () {
+			if (velocidadeAtual * -1 < velocidadeMaxima) {
+				tempo -= 0.1;
+				if (tempo < 0) tempo = 0;
+			}
+		},
+		virarADireita: function () {
+			if (velocidadeAtual != 0)
+				objetoThreeJs.rotation.z += 0.01;
+		},
+		virarAEsquerda: function () {
+			if (velocidadeAtual != 0)
+				objetoThreeJs.rotation.z -= 0.01;
+		},
+		atualizarPosicaoNaCena: function () {
+			//v = v0 + a*t
+			velocidadeAtual = aceleracao * tempo;
+			var distanciaPercorrer = velocidadeAtual * tamanhoPasso;
+
+			objetoThreeJs.translateY(distanciaPercorrer);
+		},
+		reset: function () {
+			objetoThreeJs.rotation.z = 0;
+			tempo = 0;
+			objetoThreeJs.position.set(0.0, 0.0, 0.0);
+		}
+	};
 
 	function criarKart() {
 		// Corpo principal
@@ -295,7 +335,8 @@ function Camera(kart) {
 
 function Iluminacao(kart) {
 	var holofote = new THREE.SpotLight(0xffffff);
-	holofote.position.copy(new THREE.Vector3(kart.position.x + 7, kart.position.y + 7, kart.position.z + 7));
+	holofote.target = kart;
+	holofote.position.set(kart.position.x, kart.position.y - 10, kart.position.z + 5);
 	holofote.shadow.mapSize.width = 2048;
 	holofote.shadow.mapSize.height = 2048;
 	holofote.shadow.camera.fov = 60;
@@ -321,11 +362,6 @@ function main() {
 	var scene = new THREE.Scene();    // Create main scene
 	var renderer = initRenderer();    // View function in util/utils
 
-	var velocidadeMax = 20;
-	var aceleracao = 1;
-	var tempo = 0;
-	var tamanhoPasso = 0.02;
-
 	var keyboard = new KeyboardState();
 
 	// Show axes (parameter is size of each axis)
@@ -345,12 +381,12 @@ function main() {
 
 	// create the kart
 	var kart = new Kart();
-	scene.add(kart);
+	scene.add(kart.objetoThreeJs);
 
 	// Initialize camera
-	var camera = new Camera(kart);
+	var camera = new Camera(kart.objetoThreeJs);
 
-	var iluminacao = new Iluminacao(kart);
+	var iluminacao = new Iluminacao(kart.objetoThreeJs);
 	scene.add(iluminacao.holofote);
 	scene.add(iluminacao.luzAmbiente);
 
@@ -379,24 +415,13 @@ function main() {
 	function keyboardUpdate() {
 		keyboard.update();
 
-		if (keyboard.pressed("W") && velocidade < velocidadeMax) tempo += 0.1;
-		if (keyboard.pressed("S") && velocidade * -1 < velocidadeMax) tempo -= 0.1;
-		if (keyboard.pressed("A") && velocidade != 0) kart.rotation.z += 0.01;
-		if (keyboard.pressed("D") && velocidade != 0) kart.rotation.z -= 0.01;
+		if (keyboard.pressed("W")) kart.acelerar();
+		if (keyboard.pressed("S")) kart.frear();
+		if (keyboard.pressed("A")) kart.virarADireita();
+		if (keyboard.pressed("D")) kart.virarAEsquerda();
+		if (keyboard.pressed("space")) kart.reset();
 
-		if (tempo <= 0) tempo = 0;
-
-		if (keyboard.pressed("space")) {
-			kart.rotation.z = 0;
-			tempo = 0;
-			kart.position.set(0.0, 0.0, 0.0);
-		}
-
-		//v = v0 + a*t
-		velocidade = aceleracao * tempo;
-		distanciaPercorrer = velocidade * tamanhoPasso;
-
-		kart.translateY(distanciaPercorrer);
+		kart.atualizarPosicaoNaCena();
 	}
 
 	function render() {
