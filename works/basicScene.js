@@ -16,15 +16,19 @@ function Kart() {
 	var tamanhoEixoPneu = { raio: tamanhoBico.z * 0.15, altura: ((tamanhoAsaDianteira.x - tamanhoBico.x) * 0.5) };
 	var tamanhoPneu = { raioTorus: 0.3, raioTubo: tamanhoEixoPneu.altura * 0.25 };
 
+	// Controle da velocidade do kart
 	var velocidadeMaxima = 20;
 	var velocidadeAtual = 0;
 	var aceleracao = 1;
 	var tempo = 0;
 	var tamanhoPasso = 0.02;
 
-	//Teste movimento pneu
+	// Controle do ângulo em que o kart fará curvas
 	var pneuDianteiroDireito;
 	var pneuDianteiroEsquerdo;
+	var anguloMaximo = Math.PI * 0.2;
+	var anguloMinimo = Math.PI * -0.2;
+	var angulo = 0;
 
 	var objetoThreeJs = criarKart();
 
@@ -41,21 +45,30 @@ function Kart() {
 			}
 		},
 		virarADireita: function () {
-			if (velocidadeAtual != 0)
-				objetoThreeJs.rotation.z += 0.01;
-				pneuDianteiroDireito.rotation.z += 0.01;
-				pneuDianteiroEsquerdo.rotation.z += 0.01;
+			if (angulo < anguloMinimo)
+				return;
+
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.02));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.02));
+			angulo -= 0.02;
 		},
 		virarAEsquerda: function () {
-			if (velocidadeAtual != 0)
-				objetoThreeJs.rotation.z -= 0.01;
+			if (angulo > anguloMaximo)
+				return;
+
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.02));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.02));
+			angulo += 0.02;
 		},
-		atualizarPosicaoNaCena: function () {
-			//Equação da vecolidade com aceleração constante: v = v0 + a*t
+		atualizarPosicao: function () {
+			// Equação da velocidade com aceleração constante: v = v0 + a*t
 			velocidadeAtual = aceleracao * tempo;
 			var distanciaPercorrer = velocidadeAtual * tamanhoPasso;
 
 			objetoThreeJs.translateY(distanciaPercorrer);
+
+			if (velocidadeAtual > 0)
+				objetoThreeJs.rotation.z += angulo * 0.02;
 		},
 		reset: function () {
 			objetoThreeJs.rotation.z = 0;
@@ -206,7 +219,7 @@ function Kart() {
 				0
 			)
 		);
-		eixoPneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationZ(degreesToRadians(90)));
+		eixoPneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationZ(grausParaRadianos(90)));
 		return eixoPneuDianteiroDireito;
 	}
 
@@ -219,7 +232,7 @@ function Kart() {
 				0
 			)
 		);
-		eixoPneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationZ(degreesToRadians(90)));
+		eixoPneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationZ(grausParaRadianos(90)));
 		return eixoPneuDianteiroEsquerdo;
 	}
 
@@ -232,7 +245,7 @@ function Kart() {
 				0
 			)
 		);
-		eixoPneuTraseiroDireito.matrix.multiply(matrizRotacao.makeRotationZ(degreesToRadians(90)));
+		eixoPneuTraseiroDireito.matrix.multiply(matrizRotacao.makeRotationZ(grausParaRadianos(90)));
 		return eixoPneuTraseiroDireito;
 	}
 
@@ -245,7 +258,7 @@ function Kart() {
 				0
 			)
 		);
-		eixoPneuTraseiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationZ(degreesToRadians(90)));
+		eixoPneuTraseiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationZ(grausParaRadianos(90)));
 		return eixoPneuTraseiroEsquerdo;
 	}
 
@@ -378,8 +391,6 @@ function main() {
 	var planeGeometry = new THREE.PlaneGeometry(20, 10000);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
 	var planeMaterial = new THREE.MeshBasicMaterial({
-		//color: "rgba(150, 150, 150)",
-		//side: THREE.DoubleSide,
 		color: "rgba(20, 30, 110)",
 		side: THREE.DoubleSide,
 		polygonOffset: true,
@@ -391,9 +402,9 @@ function main() {
 	scene.add(plane);
 
 
-	var wireframe = new THREE.WireframeGeometry( planeGeometry );
-	var line = new THREE.LineSegments( wireframe );
-	line.material.color.setStyle( "rgb(180, 180, 180)" );  
+	var wireframe = new THREE.WireframeGeometry(planeGeometry);
+	var line = new THREE.LineSegments(wireframe);
+	line.material.color.setStyle("rgb(180, 180, 180)");
 	scene.add(line);
 
 	// create the kart
@@ -436,11 +447,11 @@ function main() {
 
 		if (keyboard.pressed("up")) kart.acelerar();
 		if (keyboard.pressed("down")) kart.frear();
-		if (keyboard.pressed("left")) kart.virarADireita();
-		if (keyboard.pressed("right")) kart.virarAEsquerda();
+		if (keyboard.pressed("left")) kart.virarAEsquerda();
+		if (keyboard.pressed("right")) kart.virarADireita();
 		if (keyboard.pressed("space")) kart.reset();
 
-		kart.atualizarPosicaoNaCena();
+		kart.atualizarPosicao();
 	}
 
 	function render() {
@@ -454,9 +465,7 @@ function main() {
 	}
 }
 
-function degreesToRadians(degrees) {
+function grausParaRadianos(degrees) {
 	var pi = Math.PI;
 	return degrees * (pi / 180);
 }
-
-
