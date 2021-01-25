@@ -2,16 +2,29 @@ function Kart() {
 	var material = new THREE.MeshPhongMaterial({ color: 'rgb(100,255,100)' });
 	var matrizRotacao = new THREE.Matrix4();
 
-	var tamanhoCockpit = { x: 2.5, y: 3.5, z: 0.7 };
-	var tamanhoBico = { x: tamanhoCockpit.z, y: tamanhoCockpit.y * 0.5, z: tamanhoCockpit.z };
-	var tamanhoAsaDianteira = { x: tamanhoCockpit.x, y: tamanhoBico.y * 0.3, z: tamanhoBico.z * 0.5 };
-	var tamanhoLigacaoTraseira = { x: tamanhoBico.x, y: tamanhoBico.y * 0.5, z: tamanhoBico.z };
+	var tamanhoBaseCockpit = { x: 2.5, y: 3.5, z: 0.2 };
+	var tamanhoLimiteFrontalCockpit = { x: tamanhoBaseCockpit.x, y: tamanhoBaseCockpit.y * 0.25, z: tamanhoBaseCockpit.z * 3.5 };
+	var tamanhoLimiteLateralCockpit = { x: tamanhoBaseCockpit.x * 0.25, y: tamanhoBaseCockpit.y, z: tamanhoBaseCockpit.z * 3.5 };
+	var tamanhoBaseBanco = { x: tamanhoBaseCockpit.x * 0.3, y: tamanhoBaseCockpit.y * 0.2, z: tamanhoBaseCockpit.z * 0.5 };
+	var tamanhoEncostoBanco = { x: tamanhoBaseCockpit.x * 0.3, y: tamanhoBaseCockpit.z * 0.5, z: tamanhoBaseCockpit.z * 5 };
+
+	var tamanhoBico = { x: tamanhoLimiteFrontalCockpit.z, y: tamanhoBaseCockpit.y * 0.5, z: tamanhoLimiteFrontalCockpit.z };
+	var tamanhoAsaDianteira = { x: tamanhoBaseCockpit.x, y: tamanhoBico.y * 0.3, z: tamanhoBico.z * 0.5 };
+	var tamanhoLigacaoTraseira = { x: tamanhoBico.x, y: tamanhoBico.y * 0.7, z: tamanhoBico.z };
 	var tamanhoBaseAsaTraseira = { x: tamanhoLigacaoTraseira.x * 0.05, y: tamanhoLigacaoTraseira.y * 0.5, z: tamanhoLigacaoTraseira.z * 0.5 };
-	var tamanhoAsaTraseira = { x: (tamanhoCockpit.x - tamanhoLigacaoTraseira.x) * 1.2, y: tamanhoBaseAsaTraseira.y, z: tamanhoBaseAsaTraseira.x };
+	var tamanhoAsaTraseira = { x: (tamanhoBaseCockpit.x - tamanhoLigacaoTraseira.x) * 1.2, y: tamanhoBaseAsaTraseira.y, z: tamanhoBaseAsaTraseira.x };
 	var tamanhoEixoPneu = { raio: tamanhoBico.z * 0.15, altura: ((tamanhoAsaDianteira.x - tamanhoBico.x) * 0.5) };
 	var tamanhoPneu = { raioTorus: 0.3, raioTubo: tamanhoEixoPneu.altura * 0.25 };
 
-	var cockpit = criarCockpit();
+	// Corpo principal
+	var baseCockpit = criarBaseCockpit();
+	var limiteFrontalCockpit = criarLimiteDianteiroCockpit();
+	var limiteTraseiroCockpit = criarLimiteTraseiroCockpit();
+	var limiteLateralDireitoCockpit = criarLimiteLateralDireitoCockpit();
+	var limiteLateralEsquerdoCockpit = criarLimiteLateralEsquerdoCockpit();
+	var baseBanco = criarBaseBanco();
+	var encostoBanco = criarEncostoBanco();
+
 	var bico = criarBico();
 	var asaDianteira = criarAsaDianteira();
 	var ligacaoTraseira = criarLigacaoTraseira();
@@ -31,14 +44,22 @@ function Kart() {
 	var pneuTraseiroDireito = criarPneuTraseiroDireito();
 	var pneuTraseiroEsquerdo = criarPneuTraseiroEsquerdo();
 
-	cockpit.add(bico);
+	// Junção das partes
+	baseCockpit.add(bico);
+	baseCockpit.add(limiteFrontalCockpit);
+	baseCockpit.add(limiteTraseiroCockpit);
+	baseCockpit.add(limiteLateralDireitoCockpit);
+	baseCockpit.add(limiteLateralEsquerdoCockpit);
+	baseCockpit.add(baseBanco);
+	baseCockpit.add(encostoBanco);
+
 	bico.add(asaDianteira);
 	bico.add(eixoPneuDianteiroDireito);
 	bico.add(eixoPneuDianteiroEsquerdo);
 	eixoPneuDianteiroDireito.add(pneuDianteiroDireito);
 	eixoPneuDianteiroEsquerdo.add(pneuDianteiroEsquerdo);
 
-	cockpit.add(ligacaoTraseira);
+	baseCockpit.add(ligacaoTraseira);
 	ligacaoTraseira.add(eixoPneuTraseiroDireito);
 	ligacaoTraseira.add(eixoPneuTraseiroEsquerdo);
 	eixoPneuTraseiroDireito.add(pneuTraseiroDireito);
@@ -47,45 +68,82 @@ function Kart() {
 	ligacaoTraseira.add(baseEsquerdaAsaTraseira);
 	ligacaoTraseira.add(asaTraseira);
 
-	cockpit.position.set(0.0, 0.0, (tamanhoCockpit.z / 2) + 0.15);
-
-	return cockpit;
+	return baseCockpit;
 
 	// Funções auxiliares para criação dos sólidos
-	function criarCockpit() {
-		return criarParalelepípedo(tamanhoCockpit);
+	function criarBaseCockpit() {
+		return criarParalelepipedo(tamanhoBaseCockpit)
+			.translateZ((tamanhoBaseCockpit.z * 0.5) + 0.15);
+	}
+
+	function criarLimiteDianteiroCockpit() {
+		return criarParalelepipedo(tamanhoLimiteFrontalCockpit)
+			.translateY((tamanhoBaseCockpit.y - tamanhoLimiteFrontalCockpit.y) * 0.5)
+			.translateZ((tamanhoBaseCockpit.z - tamanhoLimiteFrontalCockpit.z) * -0.5);
+	}
+
+	function criarLimiteTraseiroCockpit() {
+		return criarParalelepipedo(tamanhoLimiteFrontalCockpit)
+			.translateY((tamanhoBaseCockpit.y - tamanhoLimiteFrontalCockpit.y) * -0.5)
+			.translateZ((tamanhoBaseCockpit.z - tamanhoLimiteFrontalCockpit.z) * -0.5);
+	}
+
+	function criarLimiteLateralDireitoCockpit() {
+		return criarParalelepipedo(tamanhoLimiteLateralCockpit)
+			.translateX((tamanhoBaseCockpit.x - tamanhoLimiteLateralCockpit.x) * 0.5)
+			.translateZ((tamanhoBaseCockpit.z - tamanhoLimiteLateralCockpit.z) * -0.5);
+	}
+
+	function criarLimiteLateralEsquerdoCockpit() {
+		return criarParalelepipedo(tamanhoLimiteLateralCockpit)
+			.translateX((tamanhoBaseCockpit.x - tamanhoLimiteLateralCockpit.x) * -0.5)
+			.translateZ((tamanhoBaseCockpit.z - tamanhoLimiteLateralCockpit.z) * -0.5);
+	}
+
+	function criarBaseBanco() {
+		return criarParalelepipedo(tamanhoBaseBanco)
+			.translateY((tamanhoBaseCockpit.y - tamanhoLimiteFrontalCockpit.y * 2 - tamanhoBaseBanco.y) * -0.5)
+			.translateZ((tamanhoBaseCockpit.z + tamanhoBaseBanco.z) * 0.5);
+	}
+
+	function criarEncostoBanco() {
+		return criarParalelepipedo(tamanhoEncostoBanco)
+			.translateY((tamanhoBaseCockpit.y - tamanhoLimiteFrontalCockpit.y * 2 - tamanhoEncostoBanco.y) * -0.5)
+			.translateZ((tamanhoBaseCockpit.z + tamanhoEncostoBanco.z) * 0.5);
 	}
 
 	function criarBico() {
-		return criarParalelepípedo(tamanhoBico)
-			.translateY((tamanhoCockpit.y * 0.5) + (tamanhoBico.y * 0.5));
+		return criarParalelepipedo(tamanhoBico)
+			.translateY((tamanhoBaseCockpit.y + tamanhoBico.y) * 0.5)
+			.translateZ((tamanhoLimiteFrontalCockpit.z - tamanhoBaseCockpit.z) * 0.5);
 	}
 
 	function criarAsaDianteira() {
-		return criarParalelepípedo(tamanhoAsaDianteira)
-			.translateY((tamanhoBico.y * 0.5) - (tamanhoAsaDianteira.y * 0.5))
+		return criarParalelepipedo(tamanhoAsaDianteira)
+			.translateY((tamanhoBico.y - tamanhoAsaDianteira.y) * 0.5)
 			.translateZ(tamanhoBico.z * -0.25);
 	}
 
 	function criarLigacaoTraseira() {
-		return criarParalelepípedo(tamanhoLigacaoTraseira)
-			.translateY((tamanhoCockpit.y * -0.5) + (tamanhoLigacaoTraseira.y * -0.5));
+		return criarParalelepipedo(tamanhoLigacaoTraseira)
+			.translateY((tamanhoBaseCockpit.y + tamanhoLigacaoTraseira.y) * -0.5)
+			.translateZ((tamanhoLimiteFrontalCockpit.z - tamanhoBaseCockpit.z) * 0.5);
 	}
 
 	function criarBaseDireitaAsaTraseira() {
-		return criarParalelepípedo(tamanhoBaseAsaTraseira)
+		return criarParalelepipedo(tamanhoBaseAsaTraseira)
 			.translateX((tamanhoLigacaoTraseira.x * 0.25))
 			.translateZ((tamanhoLigacaoTraseira.z + tamanhoBaseAsaTraseira.z) * 0.5);
 	}
 
 	function criarBaseEsquerdaAsaTraseira() {
-		return criarParalelepípedo(tamanhoBaseAsaTraseira)
+		return criarParalelepipedo(tamanhoBaseAsaTraseira)
 			.translateX((tamanhoLigacaoTraseira.x * -0.25))
 			.translateZ((tamanhoLigacaoTraseira.z + tamanhoBaseAsaTraseira.z) * 0.5);
 	}
 
 	function criarAsaTraseira() {
-		return criarParalelepípedo(tamanhoAsaTraseira)
+		return criarParalelepipedo(tamanhoAsaTraseira)
 			.translateZ((tamanhoBaseAsaTraseira.z) + ((tamanhoLigacaoTraseira.z + tamanhoAsaTraseira.z) * 0.5));
 	}
 
@@ -194,7 +252,7 @@ function Kart() {
 	}
 
 	// Funções de criação genéricas
-	function criarParalelepípedo(tamanho) {
+	function criarParalelepipedo(tamanho) {
 		var geometria = new THREE.BoxGeometry(tamanho.x, tamanho.y, tamanho.z);
 		return new THREE.Mesh(geometria, material);
 	}
