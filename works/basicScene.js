@@ -282,6 +282,16 @@ function main() {
 
 	var light = initDefaultLighting(scene, new THREE.Vector3(7, 7, 7));
 
+	var velocidadeMax = 20;
+	var aceleracao = 1;
+	var tempo = 0;
+	var tamanhoPasso = 0.02;
+	//v = v0 + a*t
+	var velocidade = aceleracao*tempo;
+	var distanciaPercorrer = velocidade*tamanhoPasso;
+
+	var keyboard = new KeyboardState();
+
 	// Enable mouse rotation, pan, zoom etc.
 	var trackballControls = new THREE.TrackballControls(camera, renderer.domElement);
 
@@ -325,9 +335,31 @@ function main() {
 
 	render();
 
+	function keyboardUpdate() {
+		keyboard.update();
+	
+		if (keyboard.pressed("W") && velocidade < velocidadeMax) tempo += 0.1;
+		if (keyboard.pressed("S") && velocidade*-1 < velocidadeMax) tempo -= 0.1;
+		
+		if (tempo <= 0) tempo = 0;
+	
+		velocidade = aceleracao*tempo;
+		distanciaPercorrer = velocidade*tamanhoPasso;
+		
+		if ( keyboard.pressed("space") ){
+			tempo = 0;
+			velocidade = 0;
+			distanciaPercorrer = 0;
+			kart.position.set(0.0, 0.0, 2.0);
+		}
+	
+		kart.translateY( distanciaPercorrer);
+	}
+
 	function render() {
 		stats.update(); // Update FPS
 		trackballControls.update(); // Enable mouse movements
+		keyboardUpdate();
 		requestAnimationFrame(render);
 		renderer.render(scene, camera) // Render scene
 	}
@@ -337,3 +369,5 @@ function degreesToRadians(degrees) {
 	var pi = Math.PI;
 	return degrees * (pi / 180);
 }
+
+
