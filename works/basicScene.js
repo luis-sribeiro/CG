@@ -48,9 +48,9 @@ function Kart() {
 			if (velocidadeAtual <= 0) return;
 
 			kartEstaEmInercia = false;
-			velocidadeAtual -= velocidadeAtual < 0.5
+			velocidadeAtual -= velocidadeAtual < 0.7
 				? velocidadeAtual
-				: 0.5;
+				: 0.7;
 		},
 		entrarEmInercia: function () {
 			kartEstaEmInercia = true;
@@ -76,15 +76,15 @@ function Kart() {
 		},
 		atualizarPosicao: function () {
 			if (kartEstaEmInercia && velocidadeAtual > 0)
-				velocidadeAtual -= velocidadeAtual < 0.2
+				velocidadeAtual -= velocidadeAtual < 0.3
 					? velocidadeAtual
-					: 0.2;
+					: 0.3;
 
 			var distanciaPercorrer = velocidadeAtual * 0.02;
 			objetoThreeJs.translateY(distanciaPercorrer);
 
 			if (velocidadeAtual > 0)
-				objetoThreeJs.rotation.z += angulo * 0.03;
+				objetoThreeJs.rotation.z += angulo * 0.04;
 		},
 		atualizarAnguloPneus: function () {
 			if (angulo === 0 || !volanteEstaSolto) return;
@@ -382,7 +382,10 @@ function Camera(kart) {
 		},
 		update: function () {
 			if (modoCamera === 'jogo') {
-				cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 13, kart.position.z + 5));
+				var cameraX = kart.position.x - (13 * Math.sin(-kart.rotation.z));
+				var cameraY = kart.position.y - (13 * Math.cos(-kart.rotation.z));
+
+				cameraModoDeJogo.position.copy(new THREE.Vector3(cameraX, cameraY , kart.position.z + 5));
 				cameraModoDeJogo.lookAt(kart.position);
 			}
 		}
