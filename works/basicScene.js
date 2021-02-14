@@ -1,8 +1,8 @@
 function Kart() {
-	//var material = new THREE.MeshPhongMaterial({ color: 'rgb(100,255,100)' });
-	var material = new THREE.MeshPhongMaterial({ color: 'rgb(255,255,255)' });
+	var materialCorpoKart = new THREE.MeshPhongMaterial({ color: 'rgb(255,255,255)' });
 	var materialRodas = new THREE.MeshPhongMaterial({ color: 'rgb(35,23,9)' });
 	var materialEixos = new THREE.MeshPhongMaterial({ color: 'rgb(80,80,80)' });
+
 	var matrizRotacao = new THREE.Matrix4();
 
 	var tamanhoBaseCockpit = { x: 2.5, y: 3.5, z: 0.2 };
@@ -20,11 +20,8 @@ function Kart() {
 	var tamanhoPneu = { raioTorus: 0.3, raioTubo: tamanhoEixoPneu.altura * 0.25 };
 
 	// Controle da velocidade do kart
-	var velocidadeMaxima = 20;
+	var velocidadeMaxima = 100;
 	var velocidadeAtual = 0;
-	var aceleracao = 1;
-	var tempo = 0;
-	var tamanhoPasso = 0.02;
 
 	// Controle do ângulo em que o kart fará curvas
 	var pneuDianteiroDireito;
@@ -33,56 +30,71 @@ function Kart() {
 	var anguloMinimo = Math.PI * -0.1;
 	var angulo = 0;
 
+	// Controle da inércia
+	var kartEstaEmInercia = true;
+
 	var objetoThreeJs = criarKart();
 
 	return {
 		objetoThreeJs: objetoThreeJs,
 		acelerar: function () {
-			if (velocidadeAtual < velocidadeMaxima)
-				tempo += 0.1;
+			if (velocidadeAtual < velocidadeMaxima) {
+				kartEstaEmInercia = false;
+				velocidadeAtual += 0.5;
+			}
+		},
+		entrarEmInercia: function () {
+			kartEstaEmInercia = true;
 		},
 		frear: function () {
-			if (velocidadeAtual * -1 < velocidadeMaxima) {
-				tempo -= 0.1;
-				if (tempo < 0) tempo = 0;
+			if (velocidadeAtual > 0) {
+				kartEstaEmInercia = false;
+				velocidadeAtual -= velocidadeAtual < 0.5
+					? velocidadeAtual
+					: 0.5;
 			}
 		},
 		virarADireita: function () {
 			if (angulo < anguloMinimo)
 				return;
 
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.01));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.01));
-			angulo -= 0.01;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.03));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.03));
+			angulo -= 0.03;
 		},
 		virarAEsquerda: function () {
 			if (angulo > anguloMaximo)
 				return;
 
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.01));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.01));
-			angulo += 0.01;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.03));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.03));
+			angulo += 0.03;
+		},
+		centralizarVolante: function () {
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
+			angulo = 0;
 		},
 		atualizarPosicao: function () {
-			// Equação da velocidade com aceleração constante: v = v0 + a*t
-			velocidadeAtual = aceleracao * tempo;
-			var distanciaPercorrer = velocidadeAtual * tamanhoPasso;
+			if (kartEstaEmInercia && velocidadeAtual > 0)
+				velocidadeAtual -= 0.2;
 
+			var distanciaPercorrer = velocidadeAtual * 0.02;
 			objetoThreeJs.translateY(distanciaPercorrer);
 
 			if (velocidadeAtual > 0)
-				objetoThreeJs.rotation.z += angulo * 0.01;
+				objetoThreeJs.rotation.z += angulo * 0.03;
 		},
 		reset: function () {
 			objetoThreeJs.rotation.z = 0;
 			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
 			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
-			tempo = 0;
 			angulo = 0;
 			objetoThreeJs.position.set(0.0, 0.0, 0.0);
 		}
 	};
 
+	// Função principal para criação do objeto Kart
 	function criarKart() {
 		// Corpo principal
 		var baseCockpit = criarBaseCockpit();
@@ -323,7 +335,7 @@ function Kart() {
 	// Funções de criação genéricas
 	function criarParalelepipedo(tamanho) {
 		var geometria = new THREE.BoxGeometry(tamanho.x, tamanho.y, tamanho.z);
-		return new THREE.Mesh(geometria, material);
+		return new THREE.Mesh(geometria, materialCorpoKart);
 	}
 
 	function criarCilindro(tamanho) {
@@ -344,8 +356,8 @@ function Kart() {
 }
 
 function Camera(kart) {
-	var cameraModoDeJogo = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-	cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
+	var cameraModoDeJogo = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 13, kart.position.z + 5));
 	cameraModoDeJogo.lookAt(kart.position);
 	cameraModoDeJogo.up.set(0, 0, 1);
 
@@ -359,7 +371,7 @@ function Camera(kart) {
 		},
 		update: function () {
 			if (modoCamera === 'jogo') {
-				cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 15, kart.position.z + 8));
+				cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 13, kart.position.z + 5));
 				cameraModoDeJogo.lookAt(kart.position);
 			}
 		}
@@ -402,7 +414,7 @@ function main() {
 	scene.add(axesHelper);
 
 	// create the ground plane
-	var planeGeometry = new THREE.PlaneGeometry(20, 10000);
+	var planeGeometry = new THREE.PlaneGeometry(1000, 1000, 40, 40);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
 	var planeMaterial = new THREE.MeshBasicMaterial({
 		color: "rgba(20, 30, 110)",
@@ -412,9 +424,7 @@ function main() {
 		polygonOffsetUnits: 1
 	});
 	var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-	// add the plane to the scene
 	scene.add(plane);
-
 
 	var wireframe = new THREE.WireframeGeometry(planeGeometry);
 	var line = new THREE.LineSegments(wireframe);
@@ -459,9 +469,17 @@ function main() {
 		keyboard.update();
 
 		if (keyboard.pressed("up")) kart.acelerar();
+		if (keyboard.up("up")) kart.entrarEmInercia();
+
 		if (keyboard.pressed("down")) kart.frear();
+		if (keyboard.up("down")) kart.entrarEmInercia();
+
 		if (keyboard.pressed("left")) kart.virarAEsquerda();
+		if (keyboard.up("left")) kart.centralizarVolante();
+
 		if (keyboard.pressed("right")) kart.virarADireita();
+		if (keyboard.up("right")) kart.centralizarVolante();
+
 		if (keyboard.pressed("R")) kart.reset();
 
 		kart.atualizarPosicao();
