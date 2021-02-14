@@ -26,64 +26,75 @@ function Kart() {
 	// Controle do ângulo em que o kart fará curvas
 	var pneuDianteiroDireito;
 	var pneuDianteiroEsquerdo;
-	var anguloMaximo = Math.PI * 0.1;
-	var anguloMinimo = Math.PI * -0.1;
+	var anguloMaximo = Math.PI * 0.15;
+	var anguloMinimo = Math.PI * -0.15;
 	var angulo = 0;
 
 	// Controle da inércia
 	var kartEstaEmInercia = true;
+	var volanteEstaSolto = true;
 
 	var objetoThreeJs = criarKart();
 
 	return {
 		objetoThreeJs: objetoThreeJs,
 		acelerar: function () {
-			if (velocidadeAtual < velocidadeMaxima) {
-				kartEstaEmInercia = false;
-				velocidadeAtual += 0.5;
-			}
+			if (velocidadeAtual >= velocidadeMaxima) return;
+
+			kartEstaEmInercia = false;
+			velocidadeAtual += 0.5;
+		},
+		frear: function () {
+			if (velocidadeAtual <= 0) return;
+
+			kartEstaEmInercia = false;
+			velocidadeAtual -= velocidadeAtual < 0.5
+				? velocidadeAtual
+				: 0.5;
 		},
 		entrarEmInercia: function () {
 			kartEstaEmInercia = true;
 		},
-		frear: function () {
-			if (velocidadeAtual > 0) {
-				kartEstaEmInercia = false;
-				velocidadeAtual -= velocidadeAtual < 0.5
-					? velocidadeAtual
-					: 0.5;
-			}
-		},
 		virarADireita: function () {
-			if (angulo < anguloMinimo)
-				return;
+			if (angulo < anguloMinimo) return;
 
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.03));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.03));
-			angulo -= 0.03;
+			volanteEstaSolto = false;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.05));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.05));
+			angulo -= 0.05;
 		},
 		virarAEsquerda: function () {
-			if (angulo > anguloMaximo)
-				return;
+			if (angulo > anguloMaximo) return;
 
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.03));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.03));
-			angulo += 0.03;
+			volanteEstaSolto = false;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.05));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.05));
+			angulo += 0.05;
 		},
-		centralizarVolante: function () {
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
-			angulo = 0;
+		soltarVolante: function () {
+			volanteEstaSolto = true;
 		},
 		atualizarPosicao: function () {
 			if (kartEstaEmInercia && velocidadeAtual > 0)
-				velocidadeAtual -= 0.2;
+				velocidadeAtual -= velocidadeAtual < 0.2
+					? velocidadeAtual
+					: 0.2;
 
 			var distanciaPercorrer = velocidadeAtual * 0.02;
 			objetoThreeJs.translateY(distanciaPercorrer);
 
 			if (velocidadeAtual > 0)
 				objetoThreeJs.rotation.z += angulo * 0.03;
+		},
+		atualizarAnguloPneus: function () {
+			if (angulo === 0 || !volanteEstaSolto) return;
+
+			var anguloParcial = Math.abs(angulo) < 0.05
+				? -angulo
+				: (Math.abs(angulo) * -1) / angulo * 0.05;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(anguloParcial));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(anguloParcial));
+			angulo += anguloParcial;
 		},
 		reset: function () {
 			objetoThreeJs.rotation.z = 0;
@@ -475,14 +486,15 @@ function main() {
 		if (keyboard.up("down")) kart.entrarEmInercia();
 
 		if (keyboard.pressed("left")) kart.virarAEsquerda();
-		if (keyboard.up("left")) kart.centralizarVolante();
+		if (keyboard.up("left")) kart.soltarVolante();
 
 		if (keyboard.pressed("right")) kart.virarADireita();
-		if (keyboard.up("right")) kart.centralizarVolante();
+		if (keyboard.up("right")) kart.soltarVolante();
 
 		if (keyboard.pressed("R")) kart.reset();
 
 		kart.atualizarPosicao();
+		kart.atualizarAnguloPneus();
 	}
 
 	function render() {
