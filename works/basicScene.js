@@ -20,7 +20,7 @@ function Kart() {
 	var tamanhoPneu = { raioTorus: 0.3, raioTubo: tamanhoEixoPneu.altura * 0.25 };
 
 	// Controle da velocidade do kart
-	var velocidadeMaxima = 100;
+	var velocidadeMaxima = 150;
 	var velocidadeAtual = 0;
 
 	// Controle do ângulo em que o kart fará curvas
@@ -34,7 +34,18 @@ function Kart() {
 	var kartEstaEmInercia = true;
 	var volanteEstaSolto = true;
 
+	// Polígonos do kart
 	var objetoThreeJs = criarKart();
+
+	// Controle do estado do kart para ser recuperado após mudança de câmera
+	var valoresOriginaisAoEntrarEmInspecao = {
+		posicao: new THREE.Vector3(
+			objetoThreeJs.position.x,
+			objetoThreeJs.position.y,
+			objetoThreeJs.position.z
+		),
+		rotacaoZ: objetoThreeJs.rotation.z
+	};
 
 	return {
 		objetoThreeJs: objetoThreeJs,
@@ -96,12 +107,23 @@ function Kart() {
 			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(anguloParcial));
 			angulo += anguloParcial;
 		},
-		reset: function () {
+		entrarEmModoDeInspecao: function () {
+			valoresOriginaisAoEntrarEmInspecao = {
+				posicao: new THREE.Vector3(
+					objetoThreeJs.position.x,
+					objetoThreeJs.position.y,
+					objetoThreeJs.position.z
+				),
+				rotacaoZ: objetoThreeJs.rotation.z
+			}
+
 			objetoThreeJs.rotation.z = 0;
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-angulo));
-			angulo = 0;
-			objetoThreeJs.position.set(0.0, 0.0, 0.0);
+			objetoThreeJs.position.set(0, 0, objetoThreeJs.position.z);
+			velocidadeAtual = 0;
+		},
+		sairDoModoDeInspecao: function () {
+			objetoThreeJs.position.copy(valoresOriginaisAoEntrarEmInspecao.posicao);
+			objetoThreeJs.rotation.z = valoresOriginaisAoEntrarEmInspecao.rotacaoZ;
 		}
 	};
 
@@ -367,28 +389,112 @@ function Kart() {
 }
 
 function Camera(kart) {
-	var cameraModoDeJogo = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-	cameraModoDeJogo.position.copy(new THREE.Vector3(kart.position.x, kart.position.y - 13, kart.position.z + 5));
-	cameraModoDeJogo.lookAt(kart.position);
-	cameraModoDeJogo.up.set(0, 0, 1);
+	const cameraModoDeInspecao = criarCameraInspecao();
+	const cameraModoDeJogo = criarCameraJogo();
 
-	var modoCamera = 'jogo';
+	var modoCameraAlterado = false; // Para não trocar mais de 1x por vez que a tecla é pressionada
 
 	return {
-		cameraPerspectiva: cameraModoDeJogo,
-		modo: modoCamera,
+		cameraJogo: cameraModoDeJogo,
+		cameraInspecao: cameraModoDeInspecao,
+		cameraAtual: cameraModoDeJogo,
 		trocarModoCamera: function () {
-			modoCamera = modoCamera === 'jogo' ? 'inspecao' : 'jogo';
+			if (modoCameraAlterado)
+				return;
+
+			if (this.cameraAtual === cameraModoDeJogo) {
+				this.cameraAtual = cameraModoDeInspecao;
+				kart.entrarEmModoDeInspecao();
+			}
+			else {
+				this.cameraAtual = cameraModoDeJogo;
+				kart.sairDoModoDeInspecao();
+			}
+
+			modoCameraAlterado = true;
+		},
+		possibilitarNovaTrocaDoModoDeCamera: function () {
+			modoCameraAlterado = false;
 		},
 		update: function () {
-			if (modoCamera === 'jogo') {
-				var cameraX = kart.position.x - (13 * Math.sin(-kart.rotation.z));
-				var cameraY = kart.position.y - (13 * Math.cos(-kart.rotation.z));
+			if (this.cameraAtual === cameraModoDeJogo)
+				atualizarCameraJogo();
+		}
+	}
 
-				cameraModoDeJogo.position.copy(new THREE.Vector3(cameraX, cameraY , kart.position.z + 5));
-				cameraModoDeJogo.lookAt(kart.position);
+	function criarCameraJogo() {
+		var kartPosition = kart.objetoThreeJs.position;
+		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+		camera.position.copy(new THREE.Vector3(kartPosition.x, kartPosition.y - 13, kartPosition.z + 5));
+		camera.lookAt(kartPosition);
+		camera.up.set(0, 0, 1);
+		return camera;
+	}
+
+	function criarCameraInspecao() {
+		var kartPosition = kart.objetoThreeJs.position;
+		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+		camera.position.copy(new THREE.Vector3(kartPosition.x + 7, kartPosition.y + 10, kartPosition.z + 4));
+		camera.lookAt(kartPosition);
+		camera.up.set(0, 0, 1);
+		return camera;
+	}
+
+	function atualizarCameraJogo() {
+		var kartPosition = kart.objetoThreeJs.position;
+		var kartRotation = kart.objetoThreeJs.rotation;
+
+		var cameraX = kartPosition.x - (13 * Math.sin(-kartRotation.z));
+		var cameraY = kartPosition.y - (13 * Math.cos(-kartRotation.z));
+
+		cameraModoDeJogo.position.copy(new THREE.Vector3(cameraX, cameraY, kartPosition.z + 5));
+		cameraModoDeJogo.lookAt(kartPosition);
+		cameraModoDeJogo.up.set(0, 0, 1);
+	}
+}
+
+function Teclado(camera, kart) {
+	const tecladoModoJogo = new KeyboardState();
+	const tecladoModoInspecao = new KeyboardState();
+
+	var tecladoAtual = camera.cameraAtual === camera.cameraJogo
+		? tecladoModoJogo
+		: tecladoModoInspecao;
+
+	return {
+		update: function () {
+			tecladoAtual.update();
+			if (camera.cameraAtual === camera.cameraJogo) {
+				tecladoAtual = tecladoModoJogo;
+				configurarTecladoJogo();
+			}
+			else {
+				tecladoAtual = tecladoModoInspecao;
+				configurarTecladoInspecao();
 			}
 		}
+	}
+
+	function configurarTecladoJogo() {
+		if (tecladoModoJogo.pressed("up")) kart.acelerar();
+		if (tecladoModoJogo.up("up")) kart.entrarEmInercia();
+
+		if (tecladoModoJogo.pressed("down")) kart.frear();
+		if (tecladoModoJogo.up("down")) kart.entrarEmInercia();
+
+		if (tecladoModoJogo.pressed("left")) kart.virarAEsquerda();
+		if (tecladoModoJogo.up("left")) kart.soltarVolante();
+
+		if (tecladoModoJogo.pressed("right")) kart.virarADireita();
+		if (tecladoModoJogo.up("right")) kart.soltarVolante();
+
+		if (tecladoModoJogo.pressed("space")) camera.trocarModoCamera();
+		if (tecladoModoJogo.up("space")) camera.possibilitarNovaTrocaDoModoDeCamera();
+	}
+
+	function configurarTecladoInspecao() {
+		if (tecladoModoInspecao.pressed("space")) camera.trocarModoCamera();
+		if (tecladoModoInspecao.up("space")) camera.possibilitarNovaTrocaDoModoDeCamera();
 	}
 }
 
@@ -421,8 +527,6 @@ function main() {
 	var scene = new THREE.Scene();    // Create main scene
 	var renderer = initRenderer();    // View function in util/utils
 
-	var keyboard = new KeyboardState();
-
 	// Show axes (parameter is size of each axis)
 	var axesHelper = new THREE.AxesHelper(12);
 	scene.add(axesHelper);
@@ -445,73 +549,52 @@ function main() {
 	line.material.color.setStyle("rgb(180, 180, 180)");
 	scene.add(line);
 
-	// create the kart
+	// Cria o kart
 	var kart = new Kart();
 	scene.add(kart.objetoThreeJs);
 
-	// Initialize camera
-	var camera = new Camera(kart.objetoThreeJs);
+	// Inicializa os modos de câmera
+	var camera = new Camera(kart);
 
+	// Habilita controles do teclado
+	var teclado = new Teclado(camera, kart);
+
+	// Configura a iluminação
 	var iluminacao = new Iluminacao(kart.objetoThreeJs);
 	scene.add(iluminacao.holofote);
 	scene.add(iluminacao.luzAmbiente);
 
 	// Enable mouse rotation, pan, zoom etc.
-	var trackballControls = new THREE.TrackballControls(camera.cameraPerspectiva, renderer.domElement);
-
-
-	var controls = new function () {
-		this.trocarModoCamera = function () {
-			camera.trocarModoCamera();
-		}
-	};
-
-	var gui = new dat.GUI();
-	gui.add(controls, 'trocarModoCamera').name("Trocar câmera");
-
+	var trackballControls = new THREE.TrackballControls(camera.cameraInspecao, renderer.domElement);
 
 	// Listen window size changes
 	window.addEventListener(
 		'resize',
-		function () { onWindowResize(camera.cameraPerspectiva, renderer) },
+		function () { onWindowResize(camera.cameraJogo, renderer) },
+		false
+	);
+
+	window.addEventListener(
+		'resize',
+		function () { onWindowResize(camera.cameraInspecao, renderer) },
 		false
 	);
 
 	render();
-
-	function keyboardUpdate() {
-		keyboard.update();
-
-		if (keyboard.pressed("up")) kart.acelerar();
-		if (keyboard.up("up")) kart.entrarEmInercia();
-
-		if (keyboard.pressed("down")) kart.frear();
-		if (keyboard.up("down")) kart.entrarEmInercia();
-
-		if (keyboard.pressed("left")) kart.virarAEsquerda();
-		if (keyboard.up("left")) kart.soltarVolante();
-
-		if (keyboard.pressed("right")) kart.virarADireita();
-		if (keyboard.up("right")) kart.soltarVolante();
-
-		if (keyboard.pressed("R")) kart.reset();
-
-		kart.atualizarPosicao();
-		kart.atualizarAnguloPneus();
-	}
 
 	function render() {
 		stats.update(); // Update FPS
 		trackballControls.update(); // Enable mouse movements
 		camera.update();
 		iluminacao.update();
-		keyboardUpdate();
+		teclado.update();
+		kart.atualizarPosicao();
+		kart.atualizarAnguloPneus();
 		requestAnimationFrame(render);
-		renderer.render(scene, camera.cameraPerspectiva) // Render scene
+		renderer.render(scene, camera.cameraAtual) // Render scene
 	}
 }
 
-function grausParaRadianos(degrees) {
-	var pi = Math.PI;
-	return degrees * (pi / 180);
+function grausParaRadianos(graus) {
+	return graus * (Math.PI / 180);
 }
