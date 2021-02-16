@@ -388,6 +388,7 @@ function Kart() {
 	}
 }
 
+
 function Camera(kart) {
 	const cameraModoDeInspecao = criarCameraInspecao();
 	const cameraModoDeJogo = criarCameraJogo();
@@ -522,6 +523,72 @@ function Iluminacao(kart) {
 	}
 }
 
+
+function normalizeAndRescale(obj, newScale)
+  {
+    var scale = getMaxSize(obj); // Available in 'utils.js'
+    obj.scale.set(newScale * (1.0/scale),
+                  newScale * (1.0/scale),
+                  newScale * (1.0/scale));
+    return obj;
+  }
+
+  function fixPosition(obj)
+  {
+    // Fix position of the object over the ground plane
+    var box = new THREE.Box3().setFromObject( obj );
+	obj.rotateX(grausParaRadianos(90)); //Objeto está deixado ao ser carregado
+    if(box.min.y > 0)
+      obj.translateY(-box.min.y);
+    else
+      obj.translateY(-1*box.min.y);
+
+	//Posiciona o objeto no plano
+	obj.translateZ(-150);
+	obj.translateX(-150);
+
+    return obj;
+  }
+
+//Conferir material da estátua
+function criaEstatua(scene){
+	loader = new THREE.OBJLoader();
+	loader.load(
+		'assets/lucy_angel.obj',
+		function ( object ) {
+			var obj = object;
+			obj = normalizeAndRescale(obj, 7);
+          	obj = fixPosition(obj);
+			scene.add( obj );
+		}
+	)
+  }
+
+function criaMontanhaMaior(scene){
+	var points = [];
+
+	//Apenas para exemplificar a ideia
+	points.push(new THREE.Vector3(5,5,0));
+	points.push(new THREE.Vector3(-5,-5,0));
+	points.push(new THREE.Vector3(-5,5,0));
+	points.push(new THREE.Vector3(5,-5,0));
+
+	//Formato
+	points.push(new THREE.Vector3(5,5,10));
+	points.push(new THREE.Vector3(-5,-5,10));
+	points.push(new THREE.Vector3(-5,5,10));
+	points.push(new THREE.Vector3(5,-5,10));
+
+	var objectMaterial = new THREE.MeshPhongMaterial({ color: 'rgb(100,70,20)' });
+	convexGeometry = new THREE.ConvexBufferGeometry(points);
+
+	object = new THREE.Mesh(convexGeometry, objectMaterial);
+	object.translateY(100);
+	scene.add(object);
+}
+
+
+
 function main() {
 	var stats = initStats();          // To show FPS information
 	var scene = new THREE.Scene();    // Create main scene
@@ -552,6 +619,13 @@ function main() {
 	// Cria o kart
 	var kart = new Kart();
 	scene.add(kart.objetoThreeJs);
+
+	//Cria montanha M1
+	criaMontanhaMaior(scene);
+
+	//Adiciona a estátua
+	criaEstatua(scene);
+
 
 	// Inicializa os modos de câmera
 	var camera = new Camera(kart);
