@@ -501,6 +501,123 @@ function Teclado(camera, kart) {
 	}
 }
 
+function Montanhas() {
+	const materialBase = new THREE.MeshLambertMaterial({ color: 'rgb(100,70,20)' });
+	const pontosBase = definirPontosBase();
+
+	var m1 = criarM1();
+	var m2 = criarM2();
+
+	return {
+		montanha1: m1,
+		montanha2: m2
+	}
+
+	function criarM1() {
+		var m1Pequena = criarMontanhaBase(4);
+		var m1Media = criarMontanhaBase(6);
+		var m1Grande = criarMontanhaBase(10);
+
+		m1Pequena
+			.translateY(50)
+			.rotateZ(grausParaRadianos(83));
+		m1Media
+			.translateX(35)
+			.translateY(35)
+			.rotateZ(grausParaRadianos(20));
+		m1Grande
+			.rotateZ(grausParaRadianos(-43));
+
+		m1Grande.add(m1Pequena);
+		m1Grande.add(m1Media);
+
+		return m1Grande;
+	}
+
+	function criarM2() {
+		var m2Pequena = criarMontanhaBase(3);
+		var m2Grande = criarMontanhaBase(5);
+
+		m2Pequena
+			.translateX(10)
+			.translateY(20)
+			.rotateZ(grausParaRadianos(38));
+		m2Grande
+			.translateX(-50)
+			.translateY(400)
+			.rotateZ(51);
+
+		m2Grande.add(m2Pequena);
+		return m2Grande;
+	}
+
+	function criarMontanhaBase(escala) {
+		var pontosMontanha = pontosBase.map(function (ponto) {
+			return new THREE.Vector3(ponto.x * escala, ponto.y * escala, ponto.z * escala);
+		});
+
+		var geometriaMontanha = new THREE.ConvexBufferGeometry(pontosMontanha);
+		var montanha = new THREE.Mesh(geometriaMontanha, materialBase);
+		montanha.castShadow = true;
+		return montanha;
+	}
+
+	function definirPontosBase() {
+		var pontos = [];
+
+		function adicionarPontoBase(x, y) {
+			adicionarPonto(x, y, 0);
+		}
+
+		function adicionarPonto(x, y, z) {
+			pontos.push(new THREE.Vector3(x, y, z));
+		}
+
+		adicionarPontoBase(-4.1, 3.56);
+		adicionarPontoBase(-5.36, 2.3);
+		adicionarPontoBase(-6.12, -0.32);
+		adicionarPontoBase(-5, -3);
+		adicionarPontoBase(-3.1, -6.2);
+		adicionarPontoBase(0.62, -7.04);
+		adicionarPontoBase(5, -6);
+		adicionarPontoBase(6.92, -3.5);
+		adicionarPontoBase(7.04, -0.6);
+		adicionarPontoBase(5.8, 2.04);
+		adicionarPontoBase(3.58, 4);
+		adicionarPontoBase(0.16, 5.02);
+		adicionarPontoBase(-2.24, 4.96);
+
+		adicionarPonto(-3.76, 2.7, 3.2);
+		adicionarPonto(-4.24, 0.78, 3.3);
+		adicionarPonto(-3.9, -1.58, 3.1);
+		adicionarPonto(-3, -3.7, 3.6);
+		adicionarPonto(-0.48, -5.48, 3.1);
+		adicionarPonto(1.9, -5.62, 3.7);
+		adicionarPonto(4.72, -4.48, 3.2);
+		adicionarPonto(5.08, -1.86, 3.6);
+		adicionarPonto(5.14, 0.38, 3.7);
+		adicionarPonto(3.96, 2.26, 3.2);
+		adicionarPonto(1.88, 2.32, 3.0);
+		adicionarPonto(0.26, 3.7, 3.2);
+		adicionarPonto(-2.2, 3.9, 3.7);
+
+		adicionarPonto(-2.58, 1.54, 6.0);
+		adicionarPonto(-2.46, 0.1, 6.2);
+		adicionarPonto(-1.64, -1.7, 6.8);
+		adicionarPonto(2.54, -1.56, 6.4);
+		adicionarPonto(3.42, 0.5, 6.7);
+		adicionarPonto(1.94, 1.66, 6.3);
+		adicionarPonto(-0.46, 2.62, 6.5);
+
+		adicionarPonto(1.3, 0.2, 7);
+		adicionarPonto(-1.3, -0.2, 7);
+		adicionarPonto(0.5, -0.4, 7);
+
+		adicionarPonto(0, 0, 8);
+		return pontos;
+	}
+}
+
 function Iluminacao(kart) {
 	const corPadrao = 'rgb(255,255,255)';
 
@@ -520,8 +637,17 @@ function Iluminacao(kart) {
 		update: function () {
 			holofoteKart.position.set(kart.position.x, kart.position.y, kart.position.z + 10);
 		},
-		adicionarLuzPontual: function (x, y) {
-			adicionarPosteComLampada(x, y);
+		adicionarPostesPadrao: function () {
+			adicionarPosteComLampada(495, -300);
+			adicionarPosteComLampada(495, -100);
+			adicionarPosteComLampada(495, 100);
+			adicionarPosteComLampada(495, 300);
+
+			adicionarPosteComLampada(-495, -300);
+			adicionarPosteComLampada(-495, 300);
+
+			adicionarPosteComLampada(-295, 50);
+			adicionarPosteComLampada(-50, -150);
 		},
 		toggleLuzDirecional: function () {
 			luzDirecional.visible = !luzDirecional.visible;
@@ -552,7 +678,6 @@ function Iluminacao(kart) {
 
 	function criarLuzAmbiente() {
 		var luzAmbiente = new THREE.AmbientLight('rgb(50,50,50)');
-		luzAmbiente.castShadow = true;
 		return luzAmbiente;
 	}
 
@@ -633,36 +758,16 @@ function criaEstatua(scene) {
 		'assets/lucy_angel.obj',
 		function (object) {
 			var obj = object;
+			obj.traverse(function (node) {
+				node.castShadow = true;
+			});
+
 			obj = normalizeAndRescale(obj, 50);
 			obj = fixPosition(obj);
 			scene.add(obj);
 		}
 	)
 }
-
-function criaMontanhaMaior(scene) {
-	var points = [];
-
-	//Apenas para exemplificar a ideia
-	points.push(new THREE.Vector3(5, 5, 0));
-	points.push(new THREE.Vector3(-5, -5, 0));
-	points.push(new THREE.Vector3(-5, 5, 0));
-	points.push(new THREE.Vector3(5, -5, 0));
-
-	//Formato
-	points.push(new THREE.Vector3(5, 5, 10));
-	points.push(new THREE.Vector3(-5, -5, 10));
-	points.push(new THREE.Vector3(-5, 5, 10));
-	points.push(new THREE.Vector3(5, -5, 10));
-
-	var objectMaterial = new THREE.MeshPhongMaterial({ color: 'rgb(100,70,20)' });
-	convexGeometry = new THREE.ConvexBufferGeometry(points);
-
-	object = new THREE.Mesh(convexGeometry, objectMaterial);
-	object.translateY(100);
-	scene.add(object);
-}
-
 
 
 function main() {
@@ -695,14 +800,16 @@ function main() {
 	// Cria o kart
 	var kart = new Kart();
 	kart.definirPosicao(new THREE.Vector3(485, 0, kart.objetoThreeJs.position.z));
+	kart.objetoThreeJs.receiveSh
 	scene.add(kart.objetoThreeJs);
 
-	// Cria montanha M1
-	criaMontanhaMaior(scene);
+	// Adiciona as montanhas
+	var montanhas = new Montanhas();
+	scene.add(montanhas.montanha1);
+	scene.add(montanhas.montanha2);
 
 	// Adiciona a estátua
 	criaEstatua(scene);
-
 
 	// Inicializa os modos de câmera
 	var camera = new Camera(kart);
@@ -712,21 +819,11 @@ function main() {
 
 	// Configura a iluminação
 	var iluminacao = new Iluminacao(kart.objetoThreeJs);
+	iluminacao.adicionarPostesPadrao();
+
 	scene.add(iluminacao.luzDirecional);
 	scene.add(iluminacao.holofoteKart);
 	scene.add(iluminacao.luzAmbiente);
-
-	iluminacao.adicionarLuzPontual(495, -300);
-	iluminacao.adicionarLuzPontual(495, -100);
-	iluminacao.adicionarLuzPontual(495, 100);
-	iluminacao.adicionarLuzPontual(495, 300);
-
-	iluminacao.adicionarLuzPontual(-495, -300);
-	iluminacao.adicionarLuzPontual(-495, 300);
-
-	iluminacao.adicionarLuzPontual(-295, 50);
-	iluminacao.adicionarLuzPontual(-50, -150);
-
 	iluminacao.postes.forEach(function (poste) { scene.add(poste) });
 
 	// Enable mouse rotation, pan, zoom etc.
