@@ -725,7 +725,7 @@ function Iluminacao(kart) {
 }
 
 
-function normalizeAndRescale(obj, newScale) {
+function setaEscala(obj, newScale) {
 	var scale = getMaxSize(obj);
 	obj.scale.set(
 		newScale * (1.0 / scale),
@@ -735,35 +735,24 @@ function normalizeAndRescale(obj, newScale) {
 	return obj;
 }
 
-function fixPosition(obj) {
-	// Fix position of the object over the ground plane
-	var box = new THREE.Box3().setFromObject(obj);
-	obj.rotateX(grausParaRadianos(90)); //Objeto está deixado ao ser carregado
-	if (box.min.y > 0)
-		obj.translateY(-box.min.y);
-	else
-		obj.translateY(-1 * box.min.y);
-
-	//Posiciona o objeto no plano
-	obj.translateZ(-150);
-	obj.translateX(-150);
-
-	return obj;
-}
-
-//Conferir material da estátua
 function criaEstatua(scene) {
 	loader = new THREE.OBJLoader();
 	loader.load(
 		'assets/lucy_angel.obj',
-		function (object) {
-			var obj = object;
-			obj.traverse(function (node) {
-				node.castShadow = true;
+		function (obj) {
+			var materialEstatua = new THREE.MeshPhongMaterial({ color: 'rgb(150,150,150)' })
+			obj = setaEscala(obj, 50);
+			obj.rotateX(grausParaRadianos(90)); //Objeto está deitado ao ser carregado
+			obj.translateZ(-150);
+			obj.translateX(-150);
+			obj.traverse(function (child) {
+
+				if (child instanceof THREE.Mesh) {
+					child.material = materialEstatua;
+				}
+	
 			});
 
-			obj = normalizeAndRescale(obj, 50);
-			obj = fixPosition(obj);
 			scene.add(obj);
 		}
 	)
