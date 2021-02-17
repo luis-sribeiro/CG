@@ -124,6 +124,9 @@ function Kart() {
 		sairDoModoDeInspecao: function () {
 			objetoThreeJs.position.copy(valoresOriginaisAoEntrarEmInspecao.posicao);
 			objetoThreeJs.rotation.z = valoresOriginaisAoEntrarEmInspecao.rotacaoZ;
+		},
+		definirPosicao: function (novaPosicao) {
+			objetoThreeJs.position.copy(novaPosicao);
 		}
 	};
 
@@ -388,7 +391,6 @@ function Kart() {
 	}
 }
 
-
 function Camera(kart) {
 	const cameraModoDeInspecao = criarCameraInspecao();
 	const cameraModoDeJogo = criarCameraJogo();
@@ -426,7 +428,7 @@ function Camera(kart) {
 	function criarCameraJogo() {
 		var kartPosition = kart.objetoThreeJs.position;
 		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-		camera.position.copy(new THREE.Vector3(kartPosition.x, kartPosition.y - 13, kartPosition.z + 5));
+		camera.position.copy(new THREE.Vector3(kartPosition.x, kartPosition.y - 13, kartPosition.z + 2));
 		camera.lookAt(kartPosition);
 		camera.up.set(0, 0, 1);
 		return camera;
@@ -435,8 +437,8 @@ function Camera(kart) {
 	function criarCameraInspecao() {
 		var kartPosition = kart.objetoThreeJs.position;
 		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-		camera.position.copy(new THREE.Vector3(kartPosition.x + 7, kartPosition.y + 10, kartPosition.z + 4));
-		camera.lookAt(kartPosition);
+		camera.position.copy(new THREE.Vector3(7, 10, kartPosition.z + 3.3));
+		camera.lookAt(0, 0, kart.objetoThreeJs.position.z);
 		camera.up.set(0, 0, 1);
 		return camera;
 	}
@@ -448,7 +450,7 @@ function Camera(kart) {
 		var cameraX = kartPosition.x - (13 * Math.sin(-kartRotation.z));
 		var cameraY = kartPosition.y - (13 * Math.cos(-kartRotation.z));
 
-		cameraModoDeJogo.position.copy(new THREE.Vector3(cameraX, cameraY, kartPosition.z + 5));
+		cameraModoDeJogo.position.copy(new THREE.Vector3(cameraX, cameraY, kartPosition.z + 3.3));
 		cameraModoDeJogo.lookAt(kartPosition);
 		cameraModoDeJogo.up.set(0, 0, 1);
 	}
@@ -500,84 +502,158 @@ function Teclado(camera, kart) {
 }
 
 function Iluminacao(kart) {
-	var holofote = new THREE.SpotLight(0xffffff);
-	holofote.target = kart;
-	holofote.position.set(kart.position.x, kart.position.y - 10, kart.position.z + 5);
-	holofote.shadow.mapSize.width = 2048;
-	holofote.shadow.mapSize.height = 2048;
-	holofote.shadow.camera.fov = 60;
-	holofote.castShadow = true;
-	holofote.decay = 2;
-	holofote.penumbra = 0.05;
-	holofote.name = "Holofote";
+	const corPadrao = 'rgb(255,255,255)';
 
-	var luzAmbiente = new THREE.AmbientLight(0x343434);
-	luzAmbiente.name = "LuzAmbiente";
+	var luzDirecional = criarLuzDirecional();
+	var luzAmbiente = criarLuzAmbiente();
+	var holofoteKart = criarHolofoteDoKart();
+
+	var postes = new Array(); 	// Contém poste + lâmpada + PointLight
+	var lampadas = new Array(); // Contém apenas o PointLight
 
 	return {
-		holofote: holofote,
+		luzDirecional: luzDirecional,
 		luzAmbiente: luzAmbiente,
+		holofoteKart: holofoteKart,
+		luzesPontuais: lampadas,
+		postes: postes,
 		update: function () {
-			holofote.position.copy(new THREE.Vector3(kart.position.x + 7, kart.position.y + 7, kart.position.z + 7));
+			holofoteKart.position.set(kart.position.x, kart.position.y, kart.position.z + 10);
+		},
+		adicionarLuzPontual: function (x, y) {
+			adicionarPosteComLampada(x, y);
+		},
+		toggleLuzDirecional: function () {
+			luzDirecional.visible = !luzDirecional.visible;
+		},
+		toggleHolofoteKart: function () {
+			holofoteKart.visible = !holofoteKart.visible;
+		},
+		toggleLuzesPontuais: function () {
+			lampadas.forEach(function (lampada) {
+				lampada.visible = !lampada.visible;
+			});
 		}
+	};
+
+	function criarLuzDirecional() {
+		var luzDirecional = new THREE.DirectionalLight(corPadrao);
+		luzDirecional.position.copy(new THREE.Vector3(500, 500, 1000));
+		luzDirecional.shadow.mapSize.width = 2048;
+		luzDirecional.shadow.mapSize.height = 2048;
+		luzDirecional.castShadow = true;
+
+		luzDirecional.shadow.camera.left = -200;
+		luzDirecional.shadow.camera.right = 200;
+		luzDirecional.shadow.camera.top = 200;
+		luzDirecional.shadow.camera.bottom = -200;
+		luzDirecional.name = "Luz Direcional";
+		return luzDirecional;
+	}
+
+	function criarLuzAmbiente() {
+		var luzAmbiente = new THREE.AmbientLight('rgb(50,50,50)');
+		luzAmbiente.name = "Luz Ambiente";
+		return luzAmbiente;
+	}
+
+	function criarHolofoteDoKart() {
+		var holofote = new THREE.SpotLight(corPadrao);
+		holofote.target = kart;
+		holofote.position.set(kart.position.x, kart.position.y, kart.position.z + 10);
+		holofote.shadow.mapSize.width = 2048;
+		holofote.shadow.mapSize.height = 2048;
+		holofote.shadow.camera.fov = 60;
+		holofote.castShadow = true;
+		holofote.decay = 2;
+		holofote.penumbra = 0.05;
+		holofote.name = "Holofote do Kart";
+		return holofote;
+	}
+
+	// Adiciona um poste e uma lâmpada aos seus respectivos arrays.
+	// As lâmpadas são guardadas separadas para facilitar sua ativação e desativação.
+	function adicionarPosteComLampada(x, y) {
+		var tamanhoPoste = { raio: 0.1, altura: 20 };
+		var materialPoste = new THREE.MeshPhongMaterial({ color: 'rgb(255,255,255)', shininess: "200" });
+		var geometriaPoste = new THREE.CylinderGeometry(tamanhoPoste.raio, tamanhoPoste.raio, tamanhoPoste.altura, 32);
+		var poste = new THREE.Mesh(geometriaPoste, materialPoste);
+		poste.position.set(x, y, 0);
+		poste.translateZ(tamanhoPoste.altura * 0.5);
+		poste.rotation.x = grausParaRadianos(90);
+
+		var raioLampada = 0.5;
+		var geometriaLampada = new THREE.SphereGeometry(raioLampada, 32, 32);
+		var materialLampada = new THREE.MeshPhongMaterial({ color: corPadrao });
+		var lampada = new THREE.Mesh(geometriaLampada, materialLampada);
+		lampada.translateY((tamanhoPoste.altura * 0.5) + (raioLampada * 0.5));
+		poste.add(lampada);
+
+		var luzLampada = new THREE.PointLight();
+		luzLampada.position.copy(lampada.position);
+		luzLampada.intensity = 0.5;
+		lampada.add(luzLampada);
+
+		postes.push(poste);
+		lampadas.push(lampada);
 	}
 }
 
 
-function normalizeAndRescale(obj, newScale)
-  {
-    var scale = getMaxSize(obj); // Available in 'utils.js'
-    obj.scale.set(newScale * (1.0/scale),
-                  newScale * (1.0/scale),
-                  newScale * (1.0/scale));
-    return obj;
-  }
+function normalizeAndRescale(obj, newScale) {
+	var scale = getMaxSize(obj);
+	obj.scale.set(
+		newScale * (1.0 / scale),
+		newScale * (1.0 / scale),
+		newScale * (1.0 / scale)
+	);
+	return obj;
+}
 
-  function fixPosition(obj)
-  {
-    // Fix position of the object over the ground plane
-    var box = new THREE.Box3().setFromObject( obj );
+function fixPosition(obj) {
+	// Fix position of the object over the ground plane
+	var box = new THREE.Box3().setFromObject(obj);
 	obj.rotateX(grausParaRadianos(90)); //Objeto está deixado ao ser carregado
-    if(box.min.y > 0)
-      obj.translateY(-box.min.y);
-    else
-      obj.translateY(-1*box.min.y);
+	if (box.min.y > 0)
+		obj.translateY(-box.min.y);
+	else
+		obj.translateY(-1 * box.min.y);
 
 	//Posiciona o objeto no plano
 	obj.translateZ(-150);
 	obj.translateX(-150);
 
-    return obj;
-  }
+	return obj;
+}
 
 //Conferir material da estátua
-function criaEstatua(scene){
+function criaEstatua(scene) {
 	loader = new THREE.OBJLoader();
 	loader.load(
 		'assets/lucy_angel.obj',
-		function ( object ) {
+		function (object) {
 			var obj = object;
-			obj = normalizeAndRescale(obj, 7);
-          	obj = fixPosition(obj);
-			scene.add( obj );
+			obj = normalizeAndRescale(obj, 50);
+			obj = fixPosition(obj);
+			scene.add(obj);
 		}
 	)
-  }
+}
 
-function criaMontanhaMaior(scene){
+function criaMontanhaMaior(scene) {
 	var points = [];
 
 	//Apenas para exemplificar a ideia
-	points.push(new THREE.Vector3(5,5,0));
-	points.push(new THREE.Vector3(-5,-5,0));
-	points.push(new THREE.Vector3(-5,5,0));
-	points.push(new THREE.Vector3(5,-5,0));
+	points.push(new THREE.Vector3(5, 5, 0));
+	points.push(new THREE.Vector3(-5, -5, 0));
+	points.push(new THREE.Vector3(-5, 5, 0));
+	points.push(new THREE.Vector3(5, -5, 0));
 
 	//Formato
-	points.push(new THREE.Vector3(5,5,10));
-	points.push(new THREE.Vector3(-5,-5,10));
-	points.push(new THREE.Vector3(-5,5,10));
-	points.push(new THREE.Vector3(5,-5,10));
+	points.push(new THREE.Vector3(5, 5, 10));
+	points.push(new THREE.Vector3(-5, -5, 10));
+	points.push(new THREE.Vector3(-5, 5, 10));
+	points.push(new THREE.Vector3(5, -5, 10));
 
 	var objectMaterial = new THREE.MeshPhongMaterial({ color: 'rgb(100,70,20)' });
 	convexGeometry = new THREE.ConvexBufferGeometry(points);
@@ -618,12 +694,13 @@ function main() {
 
 	// Cria o kart
 	var kart = new Kart();
+	kart.definirPosicao(new THREE.Vector3(485, 0, kart.objetoThreeJs.position.z));
 	scene.add(kart.objetoThreeJs);
 
-	//Cria montanha M1
+	// Cria montanha M1
 	criaMontanhaMaior(scene);
 
-	//Adiciona a estátua
+	// Adiciona a estátua
 	criaEstatua(scene);
 
 
@@ -635,8 +712,22 @@ function main() {
 
 	// Configura a iluminação
 	var iluminacao = new Iluminacao(kart.objetoThreeJs);
-	scene.add(iluminacao.holofote);
+	scene.add(iluminacao.luzDirecional);
+	scene.add(iluminacao.holofoteKart);
 	scene.add(iluminacao.luzAmbiente);
+
+	iluminacao.adicionarLuzPontual(495, -300);
+	iluminacao.adicionarLuzPontual(495, -100);
+	iluminacao.adicionarLuzPontual(495, 100);
+	iluminacao.adicionarLuzPontual(495, 300);
+
+	iluminacao.adicionarLuzPontual(-495, -300);
+	iluminacao.adicionarLuzPontual(-495, 300);
+
+	iluminacao.adicionarLuzPontual(-295, 50);
+	iluminacao.adicionarLuzPontual(-50, -150);
+
+	iluminacao.postes.forEach(function (poste) { scene.add(poste) });
 
 	// Enable mouse rotation, pan, zoom etc.
 	var trackballControls = new THREE.TrackballControls(camera.cameraInspecao, renderer.domElement);
@@ -654,7 +745,43 @@ function main() {
 		false
 	);
 
+	buildInterface();
 	render();
+
+	function buildInterface() {
+
+		var controls = new function () {
+			this.luzDirecional = true;
+			this.holofoteKart = true;
+			this.luzesPontuais = true;
+
+			this.switchLuzDirecional = function () {
+				iluminacao.toggleLuzDirecional();
+			};
+
+			this.switchHolofoteKart = function () {
+				iluminacao.toggleHolofoteKart();
+			};
+
+			this.switchLuzesPontuais = function () {
+				iluminacao.toggleLuzesPontuais();
+			};
+		}
+
+		var gui = new dat.GUI();
+
+		gui.add(controls, 'luzDirecional', true)
+			.name("Luzes Direcionais")
+			.onChange(function (e) { controls.switchLuzDirecional() });
+
+		gui.add(controls, 'holofoteKart', true)
+			.name("Holofote Kart")
+			.onChange(function (e) { controls.switchHolofoteKart() });
+
+		gui.add(controls, 'luzesPontuais', true)
+			.name("Luzes Pontuais")
+			.onChange(function (e) { controls.switchLuzesPontuais() });
+	}
 
 	function render() {
 		stats.update(); // Update FPS
