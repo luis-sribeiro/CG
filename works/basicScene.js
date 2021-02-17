@@ -547,13 +547,12 @@ function Iluminacao(kart) {
 		luzDirecional.shadow.camera.right = 200;
 		luzDirecional.shadow.camera.top = 200;
 		luzDirecional.shadow.camera.bottom = -200;
-		luzDirecional.name = "Luz Direcional";
 		return luzDirecional;
 	}
 
 	function criarLuzAmbiente() {
 		var luzAmbiente = new THREE.AmbientLight('rgb(50,50,50)');
-		luzAmbiente.name = "Luz Ambiente";
+		luzAmbiente.castShadow = true;
 		return luzAmbiente;
 	}
 
@@ -591,7 +590,8 @@ function Iluminacao(kart) {
 
 		var luzLampada = new THREE.PointLight();
 		luzLampada.position.copy(lampada.position);
-		luzLampada.intensity = 0.5;
+		luzLampada.intensity = 0.2;
+		luzLampada.castShadow = true;
 		lampada.add(luzLampada);
 
 		postes.push(poste);
@@ -771,7 +771,7 @@ function main() {
 		var gui = new dat.GUI();
 
 		gui.add(controls, 'luzDirecional', true)
-			.name("Luzes Direcionais")
+			.name("Luz Direcional")
 			.onChange(function (e) { controls.switchLuzDirecional() });
 
 		gui.add(controls, 'holofoteKart', true)
