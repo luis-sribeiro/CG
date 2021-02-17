@@ -53,15 +53,15 @@ function Kart() {
 			if (velocidadeAtual >= velocidadeMaxima) return;
 
 			kartEstaEmInercia = false;
-			velocidadeAtual += 0.5;
+			velocidadeAtual += 1;
 		},
 		frear: function () {
 			if (velocidadeAtual <= 0) return;
 
 			kartEstaEmInercia = false;
-			velocidadeAtual -= velocidadeAtual < 0.7
+			velocidadeAtual -= velocidadeAtual < 1.5
 				? velocidadeAtual
-				: 0.7;
+				: 1.5;
 		},
 		entrarEmInercia: function () {
 			kartEstaEmInercia = true;
@@ -498,6 +498,12 @@ function Teclado(camera, kart) {
 	function configurarTecladoInspecao() {
 		if (tecladoModoInspecao.pressed("space")) camera.trocarModoCamera();
 		if (tecladoModoInspecao.up("space")) camera.possibilitarNovaTrocaDoModoDeCamera();
+
+		if (tecladoModoJogo.pressed("left")) kart.virarAEsquerda();
+		if (tecladoModoJogo.up("left")) kart.soltarVolante();
+
+		if (tecladoModoJogo.pressed("right")) kart.virarADireita();
+		if (tecladoModoJogo.up("right")) kart.soltarVolante();
 	}
 }
 
@@ -526,6 +532,7 @@ function Montanhas() {
 			.translateY(35)
 			.rotateZ(grausParaRadianos(20));
 		m1Grande
+			.translateX(300)
 			.rotateZ(grausParaRadianos(-43));
 
 		m1Grande.add(m1Pequena);
@@ -752,7 +759,7 @@ function criaEstatua(scene) {
 				if (child instanceof THREE.Mesh) {
 					child.material = materialEstatua;
 				}
-	
+
 			});
 
 			scene.add(obj);
