@@ -741,10 +741,12 @@ function criaEstatua(scene) {
 		'assets/lucy_angel.obj',
 		function (obj) {
 			var materialEstatua = new THREE.MeshPhongMaterial({ color: 'rgb(150,150,150)' })
+			obj.castShadow = true;
 			obj = setaEscala(obj, 50);
 			obj.rotateX(grausParaRadianos(90)); //Objeto está deitado ao ser carregado
-			obj.translateZ(-150);
-			obj.translateX(-150);
+			obj.rotateY(grausParaRadianos(90)); //Objeto está deitado ao ser carregado
+			obj.translateZ(-200);
+			obj.translateX(-200);
 			obj.traverse(function (child) {
 
 				if (child instanceof THREE.Mesh) {
@@ -771,7 +773,7 @@ function main() {
 	// create the ground plane
 	var planeGeometry = new THREE.PlaneGeometry(1000, 1000, 40, 40);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
-	var planeMaterial = new THREE.MeshBasicMaterial({
+	var planeMaterial = new THREE.MeshLambertMaterial({
 		color: "rgba(20, 30, 110)",
 		side: THREE.DoubleSide,
 		polygonOffset: true,
