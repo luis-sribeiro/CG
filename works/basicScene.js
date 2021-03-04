@@ -772,16 +772,25 @@ function main() {
 	var stats = initStats();          // To show FPS information
 	var scene = new THREE.Scene();    // Create main scene
 	var renderer = initRenderer();    // View function in util/utils
-
+	
 	// Show axes (parameter is size of each axis)
 	var axesHelper = new THREE.AxesHelper(12);
 	scene.add(axesHelper);
 
+	//Carregamento das texturas
+	var textureLoader = new THREE.TextureLoader();
+	var trackTexture = textureLoader.load('assets/textures/pista.jpg');
+	var sandTexture = textureLoader.load('assets/textures/sand.jpg');
+	//Repetição da textura de area
+	sandTexture.wrapS = THREE.RepeatWrapping;
+	sandTexture.wrapT = THREE.RepeatWrapping;
+	sandTexture.repeat.set(9, 9);
+	
 	// create the ground plane
-	var planeGeometry = new THREE.PlaneGeometry(1000, 1000, 40, 40);
+	var planeGeometry = new THREE.PlaneGeometry(300, 300, 40, 40);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
 	var planeMaterial = new THREE.MeshLambertMaterial({
-		color: "rgba(20, 30, 110)",
+		//color: "rgba(20, 30, 110)",
 		side: THREE.DoubleSide,
 		polygonOffset: true,
 		polygonOffsetFactor: 1, // positive value pushes polygon further away
@@ -789,11 +798,58 @@ function main() {
 	});
 	var plane = new THREE.Mesh(planeGeometry, planeMaterial);
 	scene.add(plane);
+	plane.material.map = trackTexture;
 
-	var wireframe = new THREE.WireframeGeometry(planeGeometry);
-	var line = new THREE.LineSegments(wireframe);
-	line.material.color.setStyle("rgb(180, 180, 180)");
-	scene.add(line);
+	//cria o plano auxiliar que rebeberá a textura de areia
+	var auxPlaneGeometry = new THREE.PlaneGeometry(1000, 1000, 40, 40);
+	auxPlaneGeometry.translate(0.0, 0.0, -0.12); // To avoid conflict with ground plane
+	var auxPlaneMaterial = new THREE.MeshLambertMaterial({
+		//color: "rgba(20, 30, 110)",
+		side: THREE.DoubleSide,
+		polygonOffset: true,
+		polygonOffsetFactor: 1, // positive value pushes polygon further away
+		polygonOffsetUnits: 1
+	});
+	var auxPlane = new THREE.Mesh(auxPlaneGeometry, auxPlaneMaterial);
+	scene.add(auxPlane);
+	auxPlane.material.map = sandTexture;
+
+	//Cria skybox
+	var skyboxGeometry = new THREE.BoxGeometry(1000,1000,1000);
+	var skyboxPath = 'assets/textures/skyboxes/';
+	
+	//Algumas texturas para testar (talvez alterar na versão final do game)
+	var envs = ['crimson-tide_', 'bloody-heresy_'];
+	var skyboxTexture = envs[0];
+	
+	var skyboxUp = textureLoader.load(skyboxPath + skyboxTexture + 'up.png');
+	var skyboxDown = textureLoader.load(skyboxPath + skyboxTexture + 'dn.png');
+	var skyboxRight = textureLoader.load(skyboxPath + skyboxTexture + 'rt.png');
+	var skyboxLeft = textureLoader.load(skyboxPath + skyboxTexture + 'lf.png');
+	var skyboxBack = textureLoader.load(skyboxPath + skyboxTexture + 'bk.png');
+	var skyboxFront = textureLoader.load(skyboxPath + skyboxTexture + 'ft.png');
+	
+	var skyboxMaterials = 
+	[
+		new THREE.MeshLambertMaterial({map: skyboxFront, side: THREE.DoubleSide}),
+		new THREE.MeshLambertMaterial({map: skyboxBack, side: THREE.DoubleSide}),
+		new THREE.MeshLambertMaterial({map: skyboxUp, side: THREE.DoubleSide}),
+		new THREE.MeshLambertMaterial({map: skyboxDown, side: THREE.DoubleSide}),
+		new THREE.MeshLambertMaterial({map: skyboxRight, side: THREE.DoubleSide}),
+		new THREE.MeshLambertMaterial({map: skyboxLeft, side: THREE.DoubleSide})
+	];
+
+	var skyboxMaterial = new THREE.MeshFaceMaterial(skyboxMaterials);
+
+	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
+	skybox.rotateX(grausParaRadianos(90));
+	scene.add(skybox);
+	
+
+	//var wireframe = new THREE.WireframeGeometry(planeGeometry);
+	//var line = new THREE.LineSegments(wireframe);
+	//line.material.color.setStyle("rgb(180, 180, 180)");
+	//scene.add(line);
 
 	// Cria o kart
 	var kart = new Kart();
