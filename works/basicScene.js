@@ -21,13 +21,15 @@ function Kart() {
 
 	// Controle da velocidade do kart
 	var velocidadeMaxima = 150;
+	var velocidadeMaximaRe = -25;
 	var velocidadeAtual = 0;
 
 	// Controle do ângulo em que o kart fará curvas
 	var pneuDianteiroDireito;
 	var pneuDianteiroEsquerdo;
-	var anguloMaximo = Math.PI * 0.15;
-	var anguloMinimo = Math.PI * -0.15;
+	var anguloMaximo = Math.PI * 0.25;
+	var anguloMinimo = Math.PI * -0.25;
+	var passoAtualizacaoAngulo = 0.08;
 	var angulo = 0;
 
 	// Controle da inércia
@@ -55,13 +57,11 @@ function Kart() {
 			kartEstaEmInercia = false;
 			velocidadeAtual += 1;
 		},
-		frear: function () {
-			if (velocidadeAtual <= 0) return;
+		frearOuDarRe: function () {
+			if (velocidadeAtual <= velocidadeMaximaRe) return;
 
 			kartEstaEmInercia = false;
-			velocidadeAtual -= velocidadeAtual < 1.5
-				? velocidadeAtual
-				: 1.5;
+			velocidadeAtual -= velocidadeAtual >= 0 ? 1.5 : 0.5;
 		},
 		entrarEmInercia: function () {
 			kartEstaEmInercia = true;
@@ -70,39 +70,46 @@ function Kart() {
 			if (angulo < anguloMinimo) return;
 
 			volanteEstaSolto = false;
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-0.05));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-0.05));
-			angulo -= 0.05;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(-passoAtualizacaoAngulo));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(-passoAtualizacaoAngulo));
+			angulo -= passoAtualizacaoAngulo;
 		},
 		virarAEsquerda: function () {
 			if (angulo > anguloMaximo) return;
 
 			volanteEstaSolto = false;
-			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(0.05));
-			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(0.05));
-			angulo += 0.05;
+			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(passoAtualizacaoAngulo));
+			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(passoAtualizacaoAngulo));
+			angulo += passoAtualizacaoAngulo;
 		},
 		soltarVolante: function () {
 			volanteEstaSolto = true;
 		},
 		atualizarPosicao: function () {
-			if (kartEstaEmInercia && velocidadeAtual > 0)
-				velocidadeAtual -= velocidadeAtual < 0.3
+			if (kartEstaEmInercia && velocidadeAtual !== 0) {
+				var moduloVelocidadeAtual = Math.abs(velocidadeAtual);
+				var unidadeVelocidadeAtual = (velocidadeAtual / moduloVelocidadeAtual);
+				velocidadeAtual -= moduloVelocidadeAtual < 0.3
 					? velocidadeAtual
-					: 0.3;
+					: 0.3 * unidadeVelocidadeAtual;
+			}
 
 			var distanciaPercorrer = velocidadeAtual * 0.02;
 			objetoThreeJs.translateY(distanciaPercorrer);
 
-			if (velocidadeAtual > 0)
-				objetoThreeJs.rotation.z += angulo * 0.04;
+			if (velocidadeAtual === 0) return;
+
+			var anguloParaRotacionarKart = velocidadeAtual > 0
+				? angulo * 0.04
+				: angulo * -0.04;
+			objetoThreeJs.rotation.z += anguloParaRotacionarKart;
 		},
 		atualizarAnguloPneus: function () {
 			if (angulo === 0 || !volanteEstaSolto) return;
 
-			var anguloParcial = Math.abs(angulo) < 0.05
+			var anguloParcial = Math.abs(angulo) < passoAtualizacaoAngulo
 				? -angulo
-				: (Math.abs(angulo) * -1) / angulo * 0.05;
+				: (Math.abs(angulo) * -1) / angulo * passoAtualizacaoAngulo;
 			pneuDianteiroDireito.matrix.multiply(matrizRotacao.makeRotationY(anguloParcial));
 			pneuDianteiroEsquerdo.matrix.multiply(matrizRotacao.makeRotationY(anguloParcial));
 			angulo += anguloParcial;
@@ -482,7 +489,7 @@ function Teclado(camera, kart) {
 		if (tecladoModoJogo.pressed("up")) kart.acelerar();
 		if (tecladoModoJogo.up("up")) kart.entrarEmInercia();
 
-		if (tecladoModoJogo.pressed("down")) kart.frear();
+		if (tecladoModoJogo.pressed("down")) kart.frearOuDarRe();
 		if (tecladoModoJogo.up("down")) kart.entrarEmInercia();
 
 		if (tecladoModoJogo.pressed("left")) kart.virarAEsquerda();
@@ -772,7 +779,7 @@ function main() {
 	var stats = initStats();          // To show FPS information
 	var scene = new THREE.Scene();    // Create main scene
 	var renderer = initRenderer();    // View function in util/utils
-	
+
 	// Show axes (parameter is size of each axis)
 	var axesHelper = new THREE.AxesHelper(12);
 	scene.add(axesHelper);
@@ -785,7 +792,7 @@ function main() {
 	sandTexture.wrapS = THREE.RepeatWrapping;
 	sandTexture.wrapT = THREE.RepeatWrapping;
 	sandTexture.repeat.set(9, 9);
-	
+
 	// create the ground plane
 	var planeGeometry = new THREE.PlaneGeometry(300, 300, 40, 40);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
@@ -815,36 +822,36 @@ function main() {
 	auxPlane.material.map = sandTexture;
 
 	//Cria skybox
-	var skyboxGeometry = new THREE.BoxGeometry(1000,1000,1000);
+	var skyboxGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
 	var skyboxPath = 'assets/textures/skyboxes/';
-	
+
 	//Algumas texturas para testar (talvez alterar na versão final do game)
 	var envs = ['crimson-tide_', 'bloody-heresy_'];
 	var skyboxTexture = envs[0];
-	
+
 	var skyboxUp = textureLoader.load(skyboxPath + skyboxTexture + 'up.png');
 	var skyboxDown = textureLoader.load(skyboxPath + skyboxTexture + 'dn.png');
 	var skyboxRight = textureLoader.load(skyboxPath + skyboxTexture + 'rt.png');
 	var skyboxLeft = textureLoader.load(skyboxPath + skyboxTexture + 'lf.png');
 	var skyboxBack = textureLoader.load(skyboxPath + skyboxTexture + 'bk.png');
 	var skyboxFront = textureLoader.load(skyboxPath + skyboxTexture + 'ft.png');
-	
-	var skyboxMaterials = 
-	[
-		new THREE.MeshLambertMaterial({map: skyboxFront, side: THREE.DoubleSide}),
-		new THREE.MeshLambertMaterial({map: skyboxBack, side: THREE.DoubleSide}),
-		new THREE.MeshLambertMaterial({map: skyboxUp, side: THREE.DoubleSide}),
-		new THREE.MeshLambertMaterial({map: skyboxDown, side: THREE.DoubleSide}),
-		new THREE.MeshLambertMaterial({map: skyboxRight, side: THREE.DoubleSide}),
-		new THREE.MeshLambertMaterial({map: skyboxLeft, side: THREE.DoubleSide})
-	];
+
+	var skyboxMaterials =
+		[
+			new THREE.MeshLambertMaterial({ map: skyboxFront, side: THREE.DoubleSide }),
+			new THREE.MeshLambertMaterial({ map: skyboxBack, side: THREE.DoubleSide }),
+			new THREE.MeshLambertMaterial({ map: skyboxUp, side: THREE.DoubleSide }),
+			new THREE.MeshLambertMaterial({ map: skyboxDown, side: THREE.DoubleSide }),
+			new THREE.MeshLambertMaterial({ map: skyboxRight, side: THREE.DoubleSide }),
+			new THREE.MeshLambertMaterial({ map: skyboxLeft, side: THREE.DoubleSide })
+		];
 
 	var skyboxMaterial = new THREE.MeshFaceMaterial(skyboxMaterials);
 
 	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
 	skybox.rotateX(grausParaRadianos(90));
 	scene.add(skybox);
-	
+
 
 	//var wireframe = new THREE.WireframeGeometry(planeGeometry);
 	//var line = new THREE.LineSegments(wireframe);
