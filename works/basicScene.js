@@ -836,27 +836,18 @@ function main() {
 	var skyboxBack = textureLoader.load(skyboxPath + skyboxTexture + 'bk.png');
 	var skyboxFront = textureLoader.load(skyboxPath + skyboxTexture + 'ft.png');
 
-	var skyboxMaterials =
-		[
-			new THREE.MeshLambertMaterial({ map: skyboxFront, side: THREE.DoubleSide }),
-			new THREE.MeshLambertMaterial({ map: skyboxBack, side: THREE.DoubleSide }),
-			new THREE.MeshLambertMaterial({ map: skyboxUp, side: THREE.DoubleSide }),
-			new THREE.MeshLambertMaterial({ map: skyboxDown, side: THREE.DoubleSide }),
-			new THREE.MeshLambertMaterial({ map: skyboxRight, side: THREE.DoubleSide }),
-			new THREE.MeshLambertMaterial({ map: skyboxLeft, side: THREE.DoubleSide })
-		];
+	var skyboxMaterials = [
+		new THREE.MeshLambertMaterial({ map: skyboxFront, side: THREE.DoubleSide }),
+		new THREE.MeshLambertMaterial({ map: skyboxBack, side: THREE.DoubleSide }),
+		new THREE.MeshLambertMaterial({ map: skyboxUp, side: THREE.DoubleSide }),
+		new THREE.MeshLambertMaterial({ map: skyboxDown, side: THREE.DoubleSide }),
+		new THREE.MeshLambertMaterial({ map: skyboxRight, side: THREE.DoubleSide }),
+		new THREE.MeshLambertMaterial({ map: skyboxLeft, side: THREE.DoubleSide })
+	];
 
-	var skyboxMaterial = new THREE.MeshFaceMaterial(skyboxMaterials);
-
-	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
+	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
 	skybox.rotateX(grausParaRadianos(90));
 	scene.add(skybox);
-
-
-	//var wireframe = new THREE.WireframeGeometry(planeGeometry);
-	//var line = new THREE.LineSegments(wireframe);
-	//line.material.color.setStyle("rgb(180, 180, 180)");
-	//scene.add(line);
 
 	// Cria o kart
 	var kart = new Kart();
