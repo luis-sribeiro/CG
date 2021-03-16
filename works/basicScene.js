@@ -434,7 +434,7 @@ function Camera(kart) {
 
 	function criarCameraJogo() {
 		var kartPosition = kart.objetoThreeJs.position;
-		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20000);
 		camera.position.copy(new THREE.Vector3(kartPosition.x, kartPosition.y - 13, kartPosition.z + 2));
 		camera.lookAt(kartPosition);
 		camera.up.set(0, 0, 1);
@@ -443,7 +443,7 @@ function Camera(kart) {
 
 	function criarCameraInspecao() {
 		var kartPosition = kart.objetoThreeJs.position;
-		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20000);
 		camera.position.copy(new THREE.Vector3(7, 10, kartPosition.z + 3.3));
 		camera.lookAt(0, 0, kart.objetoThreeJs.position.z);
 		camera.up.set(0, 0, 1);
@@ -652,10 +652,10 @@ function Iluminacao(kart) {
 			holofoteKart.position.set(kart.position.x, kart.position.y, kart.position.z + 10);
 		},
 		adicionarPostesPadrao: function () {
-			adicionarPosteComLampada(495, -300);
-			adicionarPosteComLampada(495, -100);
-			adicionarPosteComLampada(495, 100);
-			adicionarPosteComLampada(495, 300);
+			adicionarPosteComLampada(60, -90);
+			adicionarPosteComLampada(20, -90);
+			adicionarPosteComLampada(-20, -90);
+			adicionarPosteComLampada(-60, -90);
 
 			adicionarPosteComLampada(-495, -300);
 			adicionarPosteComLampada(-495, 300);
@@ -678,15 +678,16 @@ function Iluminacao(kart) {
 
 	function criarLuzDirecional() {
 		var luzDirecional = new THREE.DirectionalLight(corPadrao);
-		luzDirecional.position.copy(new THREE.Vector3(500, 500, 1000));
+		//luzDirecional.position.copy(new THREE.Vector3(500, 500, 1000));
+		luzDirecional.position.copy(new THREE.Vector3(0,0,500));
 		luzDirecional.shadow.mapSize.width = 2048;
 		luzDirecional.shadow.mapSize.height = 2048;
 		luzDirecional.castShadow = true;
-
-		luzDirecional.shadow.camera.left = -200;
-		luzDirecional.shadow.camera.right = 200;
-		luzDirecional.shadow.camera.top = 200;
-		luzDirecional.shadow.camera.bottom = -200;
+		var offset = 200;
+		luzDirecional.shadow.camera.left = -offset;
+		luzDirecional.shadow.camera.right = offset;
+		luzDirecional.shadow.camera.top = offset;
+		luzDirecional.shadow.camera.bottom = -offset;
 		return luzDirecional;
 	}
 
@@ -775,6 +776,73 @@ function criaEstatua(scene) {
 }
 
 
+
+function criaCaixa(scene) {
+	const manager = new THREE.LoadingManager();
+	const textureLoader = new THREE.TextureLoader();
+	textureLoader.setPath('assets/wood_boxes/' );
+	manager.addHandler( /\.jpg$/i, textureLoader);
+	new THREE.MTLLoader( manager )
+		.setPath( 'assets/wood_boxes/' )
+		.load( 'Wooden_stuff.mtl', function ( materials ) {
+
+			materials.preload();
+
+			new THREE.OBJLoader( manager )
+				.setMaterials( materials )
+				.setPath( 'assets/wood_boxes/' )
+				.load( 'Wooden_stuff.obj', function ( obj ) {
+
+					obj.castShadow = true;
+					const scale = 4;
+					obj = setaEscala(obj, scale);
+					obj.position.x = 0;
+					obj.position.y = 0;
+					obj.position.z = scale/2.0;
+					//obj.rotateX(grausParaRadianos(90));
+					//obj.rotateY(grausParaRadianos(90));
+					//obj.translateZ(-200);
+					//obj.translateX(-250);
+					scene.add( obj );
+
+				});
+
+		} );
+}
+
+
+function criaCone(scene) {
+	const manager = new THREE.LoadingManager();
+	const textureLoader = new THREE.TextureLoader();
+	textureLoader.setPath('assets/cone/' );
+	manager.addHandler( /\.jpg$/i, textureLoader);
+	new THREE.MTLLoader( manager )
+		.setPath( 'assets/cone/' )
+		.load( 'Cone.mtl', function ( materials ) {
+
+			materials.preload();
+
+			new THREE.OBJLoader( manager )
+				.setMaterials( materials )
+				.setPath( 'assets/cone/' )
+				.load( 'Cone.obj', function ( obj ) {
+
+					obj.castShadow = true;
+					const scale = 4;
+					obj.rotateX(grausParaRadianos(90));
+					obj = setaEscala(obj, scale);
+					obj.position.x = 23;
+					obj.position.y = 20;
+					obj.position.z = 0;
+					scene.add( obj );
+
+				});
+
+		} );
+}
+
+
+
 function main() {
 	var stats = initStats();          // To show FPS information
 	var scene = new THREE.Scene();    // Create main scene
@@ -783,7 +851,7 @@ function main() {
 	// Show axes (parameter is size of each axis)
 	var axesHelper = new THREE.AxesHelper(12);
 	scene.add(axesHelper);
-
+	
 	//Carregamento das texturas
 	var textureLoader = new THREE.TextureLoader();
 	var trackTexture = textureLoader.load('assets/textures/pista.jpg');
@@ -791,10 +859,10 @@ function main() {
 	//Repetição da textura de area
 	sandTexture.wrapS = THREE.RepeatWrapping;
 	sandTexture.wrapT = THREE.RepeatWrapping;
-	sandTexture.repeat.set(9, 9);
+	sandTexture.repeat.set(300, 300);
 
 	// create the ground plane
-	var planeGeometry = new THREE.PlaneGeometry(300, 300, 40, 40);
+	var planeGeometry = new THREE.PlaneGeometry(200, 200, 40, 40);
 	planeGeometry.translate(0.0, 0.0, -0.02); // To avoid conflict with the axeshelper
 	var planeMaterial = new THREE.MeshLambertMaterial({
 		//color: "rgba(20, 30, 110)",
@@ -808,7 +876,7 @@ function main() {
 	plane.material.map = trackTexture;
 
 	//cria o plano auxiliar que rebeberá a textura de areia
-	var auxPlaneGeometry = new THREE.PlaneGeometry(1000, 1000, 40, 40);
+	var auxPlaneGeometry = new THREE.PlaneGeometry(20000, 20000, 40, 40);
 	auxPlaneGeometry.translate(0.0, 0.0, -0.12); // To avoid conflict with ground plane
 	var auxPlaneMaterial = new THREE.MeshLambertMaterial({
 		//color: "rgba(20, 30, 110)",
@@ -822,7 +890,7 @@ function main() {
 	auxPlane.material.map = sandTexture;
 
 	//Cria skybox
-	var skyboxGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
+	var skyboxGeometry = new THREE.BoxGeometry(20000, 20000, 20000);
 	var skyboxPath = 'assets/textures/skyboxes/';
 
 	//Algumas texturas para testar (talvez alterar na versão final do game)
@@ -835,7 +903,8 @@ function main() {
 	var skyboxLeft = textureLoader.load(skyboxPath + skyboxTexture + 'lf.png');
 	var skyboxBack = textureLoader.load(skyboxPath + skyboxTexture + 'bk.png');
 	var skyboxFront = textureLoader.load(skyboxPath + skyboxTexture + 'ft.png');
-
+	
+	
 	var skyboxMaterials = [
 		new THREE.MeshLambertMaterial({ map: skyboxFront, side: THREE.DoubleSide }),
 		new THREE.MeshLambertMaterial({ map: skyboxBack, side: THREE.DoubleSide }),
@@ -844,6 +913,7 @@ function main() {
 		new THREE.MeshLambertMaterial({ map: skyboxRight, side: THREE.DoubleSide }),
 		new THREE.MeshLambertMaterial({ map: skyboxLeft, side: THREE.DoubleSide })
 	];
+	
 
 	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
 	skybox.rotateX(grausParaRadianos(90));
@@ -851,7 +921,9 @@ function main() {
 
 	// Cria o kart
 	var kart = new Kart();
-	kart.definirPosicao(new THREE.Vector3(485, 0, kart.objetoThreeJs.position.z));
+	//kart.definirPosicao(new THREE.Vector3(485, 0, kart.objetoThreeJs.position.z));
+	kart.definirPosicao(new THREE.Vector3(0, -65, kart.objetoThreeJs.position.z));
+	kart.objetoThreeJs.rotateZ(grausParaRadianos(-90));
 	kart.objetoThreeJs.receiveSh
 	scene.add(kart.objetoThreeJs);
 
@@ -862,6 +934,12 @@ function main() {
 
 	// Adiciona a estátua
 	criaEstatua(scene);
+
+	//Adiciona Caixa
+	criaCaixa(scene);
+
+	//Adiciona Cone
+	criaCone(scene);
 
 	// Inicializa os modos de câmera
 	var camera = new Camera(kart);
