@@ -456,14 +456,16 @@ function Camera(kart, renderer) {
 	const cameraModoDeJogoPadrao = criarCameraJogoPadrao();
 	const cameraModoDeJogoCockpit = criarCameraJogoCockpit();
 
+	var trackballControlsCameraInspecao = new THREE.TrackballControls(cameraModoDeInspecao, renderer.domElement);
+
 	const modosCamera = {
 		0: cameraModoDeJogoPadrao,
 		1: cameraModoDeJogoCockpit,
 		2: cameraModoDeInspecao,
-		currentIndex: 0,
+		indiceAtual: 0,
 		proximoModoCamera: function () {
-			this.currentIndex = (modosCamera.currentIndex + 1) % 3;
-			return modosCamera[this.currentIndex];
+			this.indiceAtual = (modosCamera.indiceAtual + 1) % 3;
+			return modosCamera[this.indiceAtual];
 		}
 	}
 
@@ -473,7 +475,7 @@ function Camera(kart, renderer) {
 		cameraJogoPadrao: cameraModoDeJogoPadrao,
 		cameraJogoCockpit: cameraModoDeJogoCockpit,
 		cameraInspecao: cameraModoDeInspecao,
-		cameraAtual: modosCamera[modosCamera.currentIndex],
+		cameraAtual: modosCamera[modosCamera.indiceAtual],
 		trocarModoCamera: function () {
 			if (modoCameraAlterado)
 				return;
@@ -498,6 +500,8 @@ function Camera(kart, renderer) {
 				atualizarCameraJogoPadrao();
 			else if (this.cameraAtual === cameraModoDeJogoCockpit)
 				atualizarCameraCockpit();
+			else
+				trackballControlsCameraInspecao.update();
 		}
 	}
 
@@ -985,6 +989,7 @@ function main() {
 	var textureLoader = new THREE.TextureLoader();
 	var trackTexture = textureLoader.load('assets/textures/pista.jpg');
 	var sandTexture = textureLoader.load('assets/textures/sand.jpg');
+
 	//Repetição da textura de area
 	sandTexture.wrapS = THREE.RepeatWrapping;
 	sandTexture.wrapT = THREE.RepeatWrapping;
@@ -1004,7 +1009,7 @@ function main() {
 	scene.add(plane);
 	plane.material.map = trackTexture;
 
-	//cria o plano auxiliar que rebeberá a textura de areia
+	// Cria o plano auxiliar que receberá a textura de areia
 	var auxPlaneGeometry = new THREE.PlaneGeometry(20000, 20000, 40, 40);
 	auxPlaneGeometry.translate(0.0, 0.0, -0.12); // To avoid conflict with ground plane
 	var auxPlaneMaterial = new THREE.MeshLambertMaterial({
@@ -1018,11 +1023,11 @@ function main() {
 	scene.add(auxPlane);
 	auxPlane.material.map = sandTexture;
 
-	//Cria skybox
+	// Cria skybox
 	var skyboxGeometry = new THREE.BoxGeometry(20000, 20000, 20000);
 	var skyboxPath = 'assets/textures/skyboxes/';
 
-	//Algumas texturas para testar (talvez alterar na versão final do game)
+	// Algumas texturas para testar (talvez alterar na versão final do game)
 	var envs = ['crimson-tide_', 'bloody-heresy_'];
 	var skyboxTexture = envs[0];
 
@@ -1033,7 +1038,6 @@ function main() {
 	var skyboxBack = textureLoader.load(skyboxPath + skyboxTexture + 'bk.png');
 	var skyboxFront = textureLoader.load(skyboxPath + skyboxTexture + 'ft.png');
 
-
 	var skyboxMaterials = [
 		new THREE.MeshLambertMaterial({ map: skyboxFront, side: THREE.DoubleSide }),
 		new THREE.MeshLambertMaterial({ map: skyboxBack, side: THREE.DoubleSide }),
@@ -1043,15 +1047,12 @@ function main() {
 		new THREE.MeshLambertMaterial({ map: skyboxLeft, side: THREE.DoubleSide })
 	];
 
-
 	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
 	skybox.rotateX(grausParaRadianos(90));
 	scene.add(skybox);
 
-
 	// Cria o kart
 	var kart = new Kart();
-	//kart.definirPosicao(new THREE.Vector3(485, 0, kart.objetoThreeJs.position.z));
 	kart.definirPosicao(new THREE.Vector3(0, -65, kart.objetoThreeJs.position.z));
 	kart.objetoThreeJs.rotateZ(grausParaRadianos(-90));
 	scene.add(kart.objetoThreeJs);
@@ -1064,10 +1065,10 @@ function main() {
 	// Adiciona a estátua
 	criaEstatua(scene);
 
-	//Adiciona Caixa
+	// Adiciona Caixa
 	criaCaixa(scene);
 
-	//Adiciona Cone
+	// Adiciona Cone
 	criaCone(scene);
 
 	// Inicializa os modos de câmera
@@ -1084,9 +1085,6 @@ function main() {
 	scene.add(iluminacao.holofoteKart);
 	scene.add(iluminacao.luzAmbiente);
 	iluminacao.postes.forEach(function (poste) { scene.add(poste); });
-
-	// Enable mouse rotation, pan, zoom etc.
-	var trackballControls = new THREE.TrackballControls(camera.cameraInspecao, renderer.domElement);
 
 	buildInterface();
 	render();
@@ -1128,7 +1126,6 @@ function main() {
 
 	function render() {
 		stats.update(); // Update FPS
-		trackballControls.update(); // Enable mouse movements
 		iluminacao.update();
 		teclado.update();
 		kart.atualizarPosicao();
