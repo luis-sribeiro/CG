@@ -457,8 +457,8 @@ function Camera(kart, renderer) {
 	const cameraModoDeJogoCockpit = criarCameraJogoCockpit();
 
 	const modosCamera = {
-		0: cameraModoDeJogoCockpit,
-		1: cameraModoDeJogoPadrao,
+		0: cameraModoDeJogoPadrao,
+		1: cameraModoDeJogoCockpit,
 		2: cameraModoDeInspecao,
 		currentIndex: 0,
 		proximoModoCamera: function () {
@@ -660,6 +660,10 @@ function Montanhas() {
 		m1Grande.add(m1Pequena);
 		m1Grande.add(m1Media);
 
+		m1Grande.translateX(-220);
+		m1Grande.translateY(-205);
+		m1Grande.scale.set(0.27, 0.27, 0.27);
+
 		return m1Grande;
 	}
 
@@ -675,6 +679,10 @@ function Montanhas() {
 			.translateX(-50)
 			.translateY(400)
 			.rotateZ(51);
+
+		m2Grande.translateX(-145);
+		m2Grande.translateY(-365);
+		m2Grande.scale.set(0.5, 0.5, 0.5);
 
 		m2Grande.add(m2Pequena);
 		return m2Grande;
@@ -827,7 +835,7 @@ function Iluminacao(kart) {
 	// Adiciona um poste e uma lâmpada aos seus respectivos arrays.
 	// As lâmpadas são guardadas separadas para facilitar sua ativação e desativação.
 	function adicionarPosteComLampada(x, y) {
-		var tamanhoPoste = { raio: 0.1, altura: 20 };
+		var tamanhoPoste = { raio: 0.2, altura: 20 };
 		var materialPoste = new THREE.MeshPhongMaterial({ color: 'rgb(255,255,255)', shininess: "200" });
 		var geometriaPoste = new THREE.CylinderGeometry(tamanhoPoste.raio, tamanhoPoste.raio, tamanhoPoste.altura, 32);
 		var poste = new THREE.Mesh(geometriaPoste, materialPoste);
@@ -835,17 +843,26 @@ function Iluminacao(kart) {
 		poste.translateZ(tamanhoPoste.altura * 0.5);
 		poste.rotation.x = grausParaRadianos(90);
 
-		var raioLampada = 0.5;
+		var raioLampada = 1;
 		var geometriaLampada = new THREE.SphereGeometry(raioLampada, 32, 32);
 		var materialLampada = new THREE.MeshPhongMaterial({ color: corPadrao });
 		var lampada = new THREE.Mesh(geometriaLampada, materialLampada);
 		lampada.translateY((tamanhoPoste.altura * 0.5) + (raioLampada * 0.5));
 		poste.add(lampada);
 
-		var luzLampada = new THREE.PointLight();
+		var luzLampada = new THREE.SpotLight(corPadrao);
 		luzLampada.position.copy(lampada.position);
-		luzLampada.intensity = 0.2;
+		luzLampada.angle = Math.PI / 4;
+		luzLampada.penumbra = 0.1;
+		luzLampada.decay = 2;
+		luzLampada.distance = 200;
 		luzLampada.castShadow = true;
+		luzLampada.shadow.mapSize.width = 512;
+		luzLampada.shadow.mapSize.height = 512;
+		luzLampada.shadow.camera.near = 10;
+		luzLampada.shadow.camera.far = 200;
+		luzLampada.shadow.focus = 1;
+		luzLampada.target = lampada;
 		lampada.add(luzLampada);
 
 		postes.push(poste);
@@ -1028,7 +1045,7 @@ function main() {
 	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
 	skybox.rotateX(grausParaRadianos(90));
 	scene.add(skybox);
-	
+
 
 	// Cria o kart
 	var kart = new Kart();
@@ -1041,12 +1058,6 @@ function main() {
 	var montanhas = new Montanhas();
 	scene.add(montanhas.montanha1);
 	scene.add(montanhas.montanha2);
-	montanhas.montanha1.translateX(-220);
-	montanhas.montanha1.translateY(-205);
-	montanhas.montanha1.scale.set(0.27, 0.27, 0.27);
-	montanhas.montanha2.translateX(-145);
-	montanhas.montanha2.translateY(-365);
-	montanhas.montanha2.scale.set(0.5, 0.5, 0.5);
 
 	// Adiciona a estátua
 	criaEstatua(scene);
