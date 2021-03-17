@@ -478,12 +478,14 @@ function Camera(kart, renderer) {
 			if (modoCameraAlterado)
 				return;
 
+			const cameraAntiga = this.cameraAtual;
 			this.cameraAtual = modosCamera.proximoModoCamera();
-			if (this.cameraAtual !== cameraModoDeInspecao) {
-				kart.sairDoModoDeInspecao();
-			}
-			else {
+
+			if (this.cameraAtual === cameraModoDeInspecao) {
 				kart.entrarEmModoDeInspecao();
+			}
+			else if (cameraAntiga === cameraModoDeInspecao) {
+				kart.sairDoModoDeInspecao();
 			}
 
 			modoCameraAlterado = true;
