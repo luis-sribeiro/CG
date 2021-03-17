@@ -166,8 +166,8 @@ function Kart() {
 		pneuDianteiroEsquerdo = criarPneuDianteiroEsquerdo();
 		var pneuTraseiroDireito = criarPneuTraseiroDireito();
 		var pneuTraseiroEsquerdo = criarPneuTraseiroEsquerdo();
-		
-		
+
+
 		var textureLoader = new THREE.TextureLoader();
 
 		//Cria o plano que levará o logo da Ferrari
@@ -175,9 +175,9 @@ function Kart() {
 		logoFerrari.generateMipmaps = false;
 		logoFerrari.minFilter = THREE.LinearFilter;
 		logoFerrari.needsUpdate = true;
-		const ferraritGeometry = new THREE.PlaneGeometry( 0.75, 1, 32 );
-		const ferrariMaterial = new THREE.MeshLambertMaterial( { map: logoFerrari, side: THREE.DoubleSide } );
-		const ferrariPlane = new THREE.Mesh( ferraritGeometry, ferrariMaterial );
+		const ferraritGeometry = new THREE.PlaneGeometry(0.75, 1, 32);
+		const ferrariMaterial = new THREE.MeshLambertMaterial({ map: logoFerrari, side: THREE.DoubleSide });
+		const ferrariPlane = new THREE.Mesh(ferraritGeometry, ferrariMaterial);
 		ferrariPlane.translateY(0.075);
 		ferrariPlane.rotateX(grausParaRadianos(90));
 
@@ -186,9 +186,9 @@ function Kart() {
 		flame1Logo.generateMipmaps = false;
 		flame1Logo.minFilter = THREE.LinearFilter;
 		flame1Logo.needsUpdate = true;
-		const flame1Geometry = new THREE.PlaneGeometry( 2,0.5, 50 );
-		const flame1Material = new THREE.MeshLambertMaterial( { map: flame1Logo, side: THREE.DoubleSide } );
-		const flame1Plane = new THREE.Mesh( flame1Geometry, flame1Material );
+		const flame1Geometry = new THREE.PlaneGeometry(2, 0.5, 50);
+		const flame1Material = new THREE.MeshLambertMaterial({ map: flame1Logo, side: THREE.DoubleSide });
+		const flame1Plane = new THREE.Mesh(flame1Geometry, flame1Material);
 		flame1Plane.translateX(0.33);
 		flame1Plane.rotateX(grausParaRadianos(90));
 		flame1Plane.rotateY(grausParaRadianos(90));
@@ -198,9 +198,9 @@ function Kart() {
 		flame2Logo.generateMipmaps = false;
 		flame2Logo.minFilter = THREE.LinearFilter;
 		flame2Logo.needsUpdate = true;
-		const flame2Geometry = new THREE.PlaneGeometry( 2,0.5, 50 );
-		const flame2Material = new THREE.MeshLambertMaterial( { map: flame2Logo, side: THREE.DoubleSide } );
-		const flame2Plane = new THREE.Mesh( flame2Geometry, flame2Material );
+		const flame2Geometry = new THREE.PlaneGeometry(2, 0.5, 50);
+		const flame2Material = new THREE.MeshLambertMaterial({ map: flame2Logo, side: THREE.DoubleSide });
+		const flame2Plane = new THREE.Mesh(flame2Geometry, flame2Material);
 		flame2Plane.translateX(-0.33);
 		flame2Plane.rotateX(grausParaRadianos(90));
 		flame2Plane.rotateY(grausParaRadianos(90));
@@ -211,9 +211,9 @@ function Kart() {
 		leafLogo.generateMipmaps = false;
 		leafLogo.minFilter = THREE.LinearFilter;
 		leafLogo.needsUpdate = true;
-		const leafGeometry = new THREE.PlaneGeometry( 2,1, 50 );
-		const leafMaterial = new THREE.MeshLambertMaterial( { map: leafLogo, side: THREE.DoubleSide } );
-		const leafPlane = new THREE.Mesh( leafGeometry, leafMaterial );
+		const leafGeometry = new THREE.PlaneGeometry(2, 1, 50);
+		const leafMaterial = new THREE.MeshLambertMaterial({ map: leafLogo, side: THREE.DoubleSide });
+		const leafPlane = new THREE.Mesh(leafGeometry, leafMaterial);
 		leafPlane.translateZ(0.36);
 
 		// Junção das partes
@@ -451,27 +451,39 @@ function Kart() {
 	}
 }
 
-function Camera(kart) {
+function Camera(kart, renderer) {
 	const cameraModoDeInspecao = criarCameraInspecao();
-	const cameraModoDeJogo = criarCameraJogo();
+	const cameraModoDeJogoPadrao = criarCameraJogoPadrao();
+	const cameraModoDeJogoCockpit = criarCameraJogoCockpit();
+
+	const modosCamera = {
+		0: cameraModoDeJogoCockpit,
+		1: cameraModoDeJogoPadrao,
+		2: cameraModoDeInspecao,
+		currentIndex: 0,
+		proximoModoCamera: function () {
+			this.currentIndex = (modosCamera.currentIndex + 1) % 3;
+			return modosCamera[this.currentIndex];
+		}
+	}
 
 	var modoCameraAlterado = false; // Para não trocar mais de 1x por vez que a tecla é pressionada
 
 	return {
-		cameraJogo: cameraModoDeJogo,
+		cameraJogoPadrao: cameraModoDeJogoPadrao,
+		cameraJogoCockpit: cameraModoDeJogoCockpit,
 		cameraInspecao: cameraModoDeInspecao,
-		cameraAtual: cameraModoDeJogo,
+		cameraAtual: modosCamera[modosCamera.currentIndex],
 		trocarModoCamera: function () {
 			if (modoCameraAlterado)
 				return;
 
-			if (this.cameraAtual === cameraModoDeJogo) {
-				this.cameraAtual = cameraModoDeInspecao;
-				kart.entrarEmModoDeInspecao();
+			this.cameraAtual = modosCamera.proximoModoCamera();
+			if (this.cameraAtual !== cameraModoDeInspecao) {
+				kart.sairDoModoDeInspecao();
 			}
 			else {
-				this.cameraAtual = cameraModoDeJogo;
-				kart.sairDoModoDeInspecao();
+				kart.entrarEmModoDeInspecao();
 			}
 
 			modoCameraAlterado = true;
@@ -480,17 +492,25 @@ function Camera(kart) {
 			modoCameraAlterado = false;
 		},
 		update: function () {
-			if (this.cameraAtual === cameraModoDeJogo)
-				atualizarCameraJogo();
+			if (this.cameraAtual === cameraModoDeJogoPadrao)
+				atualizarCameraJogoPadrao();
+			else if (this.cameraAtual === cameraModoDeJogoCockpit)
+				atualizarCameraCockpit();
 		}
 	}
 
-	function criarCameraJogo() {
+	function criarCameraJogoPadrao() {
 		var kartPosition = kart.objetoThreeJs.position;
 		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20000);
-		camera.position.copy(new THREE.Vector3(kartPosition.x, kartPosition.y - 13, kartPosition.z + 2));
 		camera.lookAt(kartPosition);
 		camera.up.set(0, 0, 1);
+
+		window.addEventListener(
+			'resize',
+			function () { onWindowResize(cameraModoDeJogoPadrao, renderer) },
+			false
+		);
+
 		return camera;
 	}
 
@@ -500,19 +520,61 @@ function Camera(kart) {
 		camera.position.copy(new THREE.Vector3(7, 10, kartPosition.z + 3.3));
 		camera.lookAt(0, 0, kart.objetoThreeJs.position.z);
 		camera.up.set(0, 0, 1);
+
+		window.addEventListener(
+			'resize',
+			function () { onWindowResize(cameraModoDeInspecao, renderer) },
+			false
+		);
+
 		return camera;
 	}
 
-	function atualizarCameraJogo() {
+	function criarCameraJogoCockpit() {
+		var kartPosition = kart.objetoThreeJs.position;
+		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20000);
+		camera.lookAt(kartPosition);
+		camera.up.set(0, 0, 1);
+
+		window.addEventListener(
+			'resize',
+			function () { onWindowResize(cameraModoDeJogoPadrao, renderer) },
+			false
+		);
+
+		return camera;
+	}
+
+	function atualizarCameraJogoPadrao() {
 		var kartPosition = kart.objetoThreeJs.position;
 		var kartRotation = kart.objetoThreeJs.rotation;
 
 		var cameraX = kartPosition.x - (13 * Math.sin(-kartRotation.z));
 		var cameraY = kartPosition.y - (13 * Math.cos(-kartRotation.z));
+		var cameraZ = kartPosition.z + 3.3;
 
-		cameraModoDeJogo.position.copy(new THREE.Vector3(cameraX, cameraY, kartPosition.z + 3.3));
-		cameraModoDeJogo.lookAt(kartPosition);
-		cameraModoDeJogo.up.set(0, 0, 1);
+		cameraModoDeJogoPadrao.position.copy(new THREE.Vector3(cameraX, cameraY, cameraZ));
+		cameraModoDeJogoPadrao.lookAt(kartPosition);
+		cameraModoDeJogoPadrao.up.set(0, 0, 1);
+	}
+
+	function atualizarCameraCockpit() {
+		var kartPosition = kart.objetoThreeJs.position;
+		var kartRotation = kart.objetoThreeJs.rotation;
+
+		const distanciaCamera = -0.8;
+		var cameraX = kartPosition.x + (distanciaCamera * Math.sin(-kartRotation.z));
+		var cameraY = kartPosition.y + (distanciaCamera * Math.cos(-kartRotation.z));
+		var cameraZ = kartPosition.z + 1;
+
+		const distanciaLookAt = 5;
+		var lookAtX = kartPosition.x + (distanciaLookAt * Math.sin(-kartRotation.z));
+		var lookAtY = kartPosition.y + (distanciaLookAt * Math.cos(-kartRotation.z));
+		var lookAtZ = kartPosition.z + 1;
+
+		cameraModoDeJogoCockpit.position.copy(new THREE.Vector3(cameraX, cameraY, cameraZ));
+		cameraModoDeJogoCockpit.lookAt(lookAtX, lookAtY, lookAtZ);
+		cameraModoDeJogoCockpit.up.set(0, 0, 1);
 	}
 }
 
@@ -520,14 +582,14 @@ function Teclado(camera, kart) {
 	const tecladoModoJogo = new KeyboardState();
 	const tecladoModoInspecao = new KeyboardState();
 
-	var tecladoAtual = camera.cameraAtual === camera.cameraJogo
+	var tecladoAtual = camera.cameraAtual !== camera.cameraInspecao
 		? tecladoModoJogo
 		: tecladoModoInspecao;
 
 	return {
 		update: function () {
 			tecladoAtual.update();
-			if (camera.cameraAtual === camera.cameraJogo) {
+			if (camera.cameraAtual !== camera.cameraInspecao) {
 				tecladoAtual = tecladoModoJogo;
 				configurarTecladoJogo();
 			}
@@ -731,8 +793,7 @@ function Iluminacao(kart) {
 
 	function criarLuzDirecional() {
 		var luzDirecional = new THREE.DirectionalLight(corPadrao);
-		//luzDirecional.position.copy(new THREE.Vector3(500, 500, 1000));
-		luzDirecional.position.copy(new THREE.Vector3(0,0,500));
+		luzDirecional.position.copy(new THREE.Vector3(0, 0, 500));
 		luzDirecional.shadow.mapSize.width = 2048;
 		luzDirecional.shadow.mapSize.height = 2048;
 		luzDirecional.castShadow = true;
@@ -833,52 +894,52 @@ function criaEstatua(scene) {
 function criaCaixa(scene) {
 	const manager = new THREE.LoadingManager();
 	const textureLoader = new THREE.TextureLoader();
-	textureLoader.setPath('assets/wood_boxes/' );
-	manager.addHandler( /\.jpg$/i, textureLoader);
-	new THREE.MTLLoader( manager )
-		.setPath( 'assets/wood_boxes/' )
-		.load( 'Wooden_stuff.mtl', function ( materials ) {
+	textureLoader.setPath('assets/wood_boxes/');
+	manager.addHandler(/\.jpg$/i, textureLoader);
+	new THREE.MTLLoader(manager)
+		.setPath('assets/wood_boxes/')
+		.load('Wooden_stuff.mtl', function (materials) {
 
 			materials.preload();
 
-			new THREE.OBJLoader( manager )
-				.setMaterials( materials )
-				.setPath( 'assets/wood_boxes/' )
-				.load( 'Wooden_stuff.obj', function ( obj ) {
+			new THREE.OBJLoader(manager)
+				.setMaterials(materials)
+				.setPath('assets/wood_boxes/')
+				.load('Wooden_stuff.obj', function (obj) {
 
 					obj.castShadow = true;
 					const scale = 4;
 					obj = setaEscala(obj, scale);
 					obj.position.x = 12;
 					obj.position.y = 50;
-					obj.position.z = scale/2.0;
+					obj.position.z = scale / 2.0;
 					//obj.rotateX(grausParaRadianos(90));
 					//obj.rotateY(grausParaRadianos(90));
 					//obj.translateZ(-200);
 					//obj.translateX(-250);
-					scene.add( obj );
+					scene.add(obj);
 
 				});
 
-		} );
+		});
 }
 
 
 function criaCone(scene) {
 	const manager = new THREE.LoadingManager();
 	const textureLoader = new THREE.TextureLoader();
-	textureLoader.setPath('assets/cone/' );
-	manager.addHandler( /\.jpg$/i, textureLoader);
-	new THREE.MTLLoader( manager )
-		.setPath( 'assets/cone/' )
-		.load( 'Cone.mtl', function ( materials ) {
+	textureLoader.setPath('assets/cone/');
+	manager.addHandler(/\.jpg$/i, textureLoader);
+	new THREE.MTLLoader(manager)
+		.setPath('assets/cone/')
+		.load('Cone.mtl', function (materials) {
 
 			materials.preload();
 
-			new THREE.OBJLoader( manager )
-				.setMaterials( materials )
-				.setPath( 'assets/cone/' )
-				.load( 'Cone.obj', function ( obj ) {
+			new THREE.OBJLoader(manager)
+				.setMaterials(materials)
+				.setPath('assets/cone/')
+				.load('Cone.obj', function (obj) {
 
 					obj.castShadow = true;
 					const scale = 3;
@@ -887,11 +948,11 @@ function criaCone(scene) {
 					obj.position.x = 30;
 					obj.position.y = -60;
 					obj.position.z = 0;
-					scene.add( obj );
+					scene.add(obj);
 
 				});
 
-		} );
+		});
 }
 
 
@@ -904,7 +965,7 @@ function main() {
 	// Show axes (parameter is size of each axis)
 	var axesHelper = new THREE.AxesHelper(12);
 	scene.add(axesHelper);
-	
+
 	//Carregamento das texturas
 	var textureLoader = new THREE.TextureLoader();
 	var trackTexture = textureLoader.load('assets/textures/pista.jpg');
@@ -956,8 +1017,8 @@ function main() {
 	var skyboxLeft = textureLoader.load(skyboxPath + skyboxTexture + 'lf.png');
 	var skyboxBack = textureLoader.load(skyboxPath + skyboxTexture + 'bk.png');
 	var skyboxFront = textureLoader.load(skyboxPath + skyboxTexture + 'ft.png');
-	
-	
+
+
 	var skyboxMaterials = [
 		new THREE.MeshLambertMaterial({ map: skyboxFront, side: THREE.DoubleSide }),
 		new THREE.MeshLambertMaterial({ map: skyboxBack, side: THREE.DoubleSide }),
@@ -966,29 +1027,28 @@ function main() {
 		new THREE.MeshLambertMaterial({ map: skyboxRight, side: THREE.DoubleSide }),
 		new THREE.MeshLambertMaterial({ map: skyboxLeft, side: THREE.DoubleSide })
 	];
-	
+
 
 	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
 	skybox.rotateX(grausParaRadianos(90));
 	scene.add(skybox);
-	
+
 	var logoFerrari = textureLoader.load('assets/textures/ferrari_logo.jpg');
-	const testGeometry = new THREE.PlaneGeometry( 1, 1, 32 );
-	const testMaterial = new THREE.MeshLambertMaterial( { map: logoFerrari, side: THREE.DoubleSide } );
-	const testPlane = new THREE.Mesh( testGeometry, testMaterial );
+	const testGeometry = new THREE.PlaneGeometry(1, 1, 32);
+	const testMaterial = new THREE.MeshLambertMaterial({ map: logoFerrari, side: THREE.DoubleSide });
+	const testPlane = new THREE.Mesh(testGeometry, testMaterial);
 	//testPlane.translate(100,100,10);
 	testPlane.translateX(100);
 	testPlane.translateY(100);
 	testPlane.translateZ(0.5);
 	testPlane.rotateX(grausParaRadianos(90));
-	scene.add( testPlane );
+	scene.add(testPlane);
 
 	// Cria o kart
 	var kart = new Kart();
 	//kart.definirPosicao(new THREE.Vector3(485, 0, kart.objetoThreeJs.position.z));
 	kart.definirPosicao(new THREE.Vector3(0, -65, kart.objetoThreeJs.position.z));
 	kart.objetoThreeJs.rotateZ(grausParaRadianos(-90));
-	kart.objetoThreeJs.receiveSh
 	scene.add(kart.objetoThreeJs);
 
 	// Adiciona as montanhas
@@ -997,10 +1057,10 @@ function main() {
 	scene.add(montanhas.montanha2);
 	montanhas.montanha1.translateX(-220);
 	montanhas.montanha1.translateY(-205);
-	montanhas.montanha1.scale.set(0.27,0.27,0.27);
+	montanhas.montanha1.scale.set(0.27, 0.27, 0.27);
 	montanhas.montanha2.translateX(-145);
 	montanhas.montanha2.translateY(-365);
-	montanhas.montanha2.scale.set(0.5,0.5,0.5);
+	montanhas.montanha2.scale.set(0.5, 0.5, 0.5);
 
 	// Adiciona a estátua
 	criaEstatua(scene);
@@ -1012,7 +1072,7 @@ function main() {
 	criaCone(scene);
 
 	// Inicializa os modos de câmera
-	var camera = new Camera(kart);
+	var camera = new Camera(kart, renderer);
 
 	// Habilita controles do teclado
 	var teclado = new Teclado(camera, kart);
@@ -1024,23 +1084,10 @@ function main() {
 	scene.add(iluminacao.luzDirecional);
 	scene.add(iluminacao.holofoteKart);
 	scene.add(iluminacao.luzAmbiente);
-	iluminacao.postes.forEach(function (poste) { scene.add(poste) });
+	iluminacao.postes.forEach(function (poste) { scene.add(poste); });
 
 	// Enable mouse rotation, pan, zoom etc.
 	var trackballControls = new THREE.TrackballControls(camera.cameraInspecao, renderer.domElement);
-
-	// Listen window size changes
-	window.addEventListener(
-		'resize',
-		function () { onWindowResize(camera.cameraJogo, renderer) },
-		false
-	);
-
-	window.addEventListener(
-		'resize',
-		function () { onWindowResize(camera.cameraInspecao, renderer) },
-		false
-	);
 
 	buildInterface();
 	render();
@@ -1083,11 +1130,11 @@ function main() {
 	function render() {
 		stats.update(); // Update FPS
 		trackballControls.update(); // Enable mouse movements
-		camera.update();
 		iluminacao.update();
 		teclado.update();
 		kart.atualizarPosicao();
 		kart.atualizarAnguloPneus();
+		camera.update();
 		requestAnimationFrame(render);
 		renderer.render(scene, camera.cameraAtual) // Render scene
 	}
