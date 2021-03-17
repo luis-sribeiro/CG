@@ -166,14 +166,67 @@ function Kart() {
 		pneuDianteiroEsquerdo = criarPneuDianteiroEsquerdo();
 		var pneuTraseiroDireito = criarPneuTraseiroDireito();
 		var pneuTraseiroEsquerdo = criarPneuTraseiroEsquerdo();
+		
+		
+		var textureLoader = new THREE.TextureLoader();
+
+		//Cria o plano que levará o logo da Ferrari
+		var logoFerrari = textureLoader.load('assets/textures/ferrari_logo.jpg');
+		logoFerrari.generateMipmaps = false;
+		logoFerrari.minFilter = THREE.LinearFilter;
+		logoFerrari.needsUpdate = true;
+		const ferraritGeometry = new THREE.PlaneGeometry( 0.75, 1, 32 );
+		const ferrariMaterial = new THREE.MeshLambertMaterial( { map: logoFerrari, side: THREE.DoubleSide } );
+		const ferrariPlane = new THREE.Mesh( ferraritGeometry, ferrariMaterial );
+		ferrariPlane.translateY(0.075);
+		ferrariPlane.rotateX(grausParaRadianos(90));
+
+		//Cria o plano que levará o primeiro adeviso de chamas
+		var flame1Logo = textureLoader.load('assets/textures/flame_1.png');
+		flame1Logo.generateMipmaps = false;
+		flame1Logo.minFilter = THREE.LinearFilter;
+		flame1Logo.needsUpdate = true;
+		const flame1Geometry = new THREE.PlaneGeometry( 2,0.5, 50 );
+		const flame1Material = new THREE.MeshLambertMaterial( { map: flame1Logo, side: THREE.DoubleSide } );
+		const flame1Plane = new THREE.Mesh( flame1Geometry, flame1Material );
+		flame1Plane.translateX(0.33);
+		flame1Plane.rotateX(grausParaRadianos(90));
+		flame1Plane.rotateY(grausParaRadianos(90));
+
+		//Cria o plano que levará o segundo adeviso de chamas
+		var flame2Logo = textureLoader.load('assets/textures/flame_2.png');
+		flame2Logo.generateMipmaps = false;
+		flame2Logo.minFilter = THREE.LinearFilter;
+		flame2Logo.needsUpdate = true;
+		const flame2Geometry = new THREE.PlaneGeometry( 2,0.5, 50 );
+		const flame2Material = new THREE.MeshLambertMaterial( { map: flame2Logo, side: THREE.DoubleSide } );
+		const flame2Plane = new THREE.Mesh( flame2Geometry, flame2Material );
+		flame2Plane.translateX(-0.33);
+		flame2Plane.rotateX(grausParaRadianos(90));
+		flame2Plane.rotateY(grausParaRadianos(90));
+
+
+		//Cria o plano que levará o adeviso das folhas
+		var leafLogo = textureLoader.load('assets/textures/leaf.png');
+		leafLogo.generateMipmaps = false;
+		leafLogo.minFilter = THREE.LinearFilter;
+		leafLogo.needsUpdate = true;
+		const leafGeometry = new THREE.PlaneGeometry( 2,1, 50 );
+		const leafMaterial = new THREE.MeshLambertMaterial( { map: leafLogo, side: THREE.DoubleSide } );
+		const leafPlane = new THREE.Mesh( leafGeometry, leafMaterial );
+		leafPlane.translateZ(0.36);
 
 		// Junção das partes
 		baseCockpit.add(bico);
 		baseCockpit.add(limiteFrontalCockpit);
+		limiteFrontalCockpit.add(leafPlane);
 		baseCockpit.add(limiteTraseiroCockpit);
+		limiteLateralDireitoCockpit.add(flame1Plane);
 		baseCockpit.add(limiteLateralDireitoCockpit);
+		limiteLateralEsquerdoCockpit.add(flame2Plane);
 		baseCockpit.add(limiteLateralEsquerdoCockpit);
 		baseCockpit.add(baseBanco);
+		encostoBanco.add(ferrariPlane);
 		baseCockpit.add(encostoBanco);
 
 		bico.add(asaDianteira);
@@ -757,11 +810,11 @@ function criaEstatua(scene) {
 		function (obj) {
 			var materialEstatua = new THREE.MeshPhongMaterial({ color: 'rgb(150,150,150)' })
 			obj.castShadow = true;
-			obj = setaEscala(obj, 50);
+			obj = setaEscala(obj, 30);
 			obj.rotateX(grausParaRadianos(90)); //Objeto está deitado ao ser carregado
 			obj.rotateY(grausParaRadianos(90)); //Objeto está deitado ao ser carregado
-			obj.translateZ(-200);
-			obj.translateX(-200);
+			obj.translateZ(-47);
+			obj.translateX(50);
 			obj.traverse(function (child) {
 
 				if (child instanceof THREE.Mesh) {
@@ -796,8 +849,8 @@ function criaCaixa(scene) {
 					obj.castShadow = true;
 					const scale = 4;
 					obj = setaEscala(obj, scale);
-					obj.position.x = 0;
-					obj.position.y = 0;
+					obj.position.x = 12;
+					obj.position.y = 50;
 					obj.position.z = scale/2.0;
 					//obj.rotateX(grausParaRadianos(90));
 					//obj.rotateY(grausParaRadianos(90));
@@ -828,11 +881,11 @@ function criaCone(scene) {
 				.load( 'Cone.obj', function ( obj ) {
 
 					obj.castShadow = true;
-					const scale = 4;
+					const scale = 3;
 					obj.rotateX(grausParaRadianos(90));
 					obj = setaEscala(obj, scale);
-					obj.position.x = 23;
-					obj.position.y = 20;
+					obj.position.x = 30;
+					obj.position.y = -60;
 					obj.position.z = 0;
 					scene.add( obj );
 
@@ -918,6 +971,17 @@ function main() {
 	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
 	skybox.rotateX(grausParaRadianos(90));
 	scene.add(skybox);
+	
+	var logoFerrari = textureLoader.load('assets/textures/ferrari_logo.jpg');
+	const testGeometry = new THREE.PlaneGeometry( 1, 1, 32 );
+	const testMaterial = new THREE.MeshLambertMaterial( { map: logoFerrari, side: THREE.DoubleSide } );
+	const testPlane = new THREE.Mesh( testGeometry, testMaterial );
+	//testPlane.translate(100,100,10);
+	testPlane.translateX(100);
+	testPlane.translateY(100);
+	testPlane.translateZ(0.5);
+	testPlane.rotateX(grausParaRadianos(90));
+	scene.add( testPlane );
 
 	// Cria o kart
 	var kart = new Kart();
@@ -931,6 +995,12 @@ function main() {
 	var montanhas = new Montanhas();
 	scene.add(montanhas.montanha1);
 	scene.add(montanhas.montanha2);
+	montanhas.montanha1.translateX(-220);
+	montanhas.montanha1.translateY(-205);
+	montanhas.montanha1.scale.set(0.27,0.27,0.27);
+	montanhas.montanha2.translateX(-145);
+	montanhas.montanha2.translateY(-365);
+	montanhas.montanha2.scale.set(0.5,0.5,0.5);
 
 	// Adiciona a estátua
 	criaEstatua(scene);
