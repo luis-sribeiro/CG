@@ -211,7 +211,7 @@ function Kart() {
 		leafLogo.generateMipmaps = false;
 		leafLogo.minFilter = THREE.LinearFilter;
 		leafLogo.needsUpdate = true;
-		const leafGeometry = new THREE.PlaneGeometry(2, 1, 50);
+		const leafGeometry = new THREE.PlaneGeometry(2, 0.7, 50);
 		const leafMaterial = new THREE.MeshLambertMaterial({ map: leafLogo, side: THREE.DoubleSide });
 		const leafPlane = new THREE.Mesh(leafGeometry, leafMaterial);
 		leafPlane.translateZ(0.36);
@@ -772,11 +772,11 @@ function Iluminacao(kart) {
 			adicionarPosteComLampada(-20, -90);
 			adicionarPosteComLampada(-60, -90);
 
-			adicionarPosteComLampada(-495, -300);
-			adicionarPosteComLampada(-495, 300);
+			adicionarPosteComLampada(80, 105);
+			adicionarPosteComLampada(13, 40);
 
-			adicionarPosteComLampada(-295, 50);
-			adicionarPosteComLampada(-50, -150);
+			adicionarPosteComLampada(-50, 10);
+			adicionarPosteComLampada(-100, 70);
 		},
 		toggleLuzDirecional: function () {
 			luzDirecional.visible = !luzDirecional.visible;
@@ -913,10 +913,6 @@ function criaCaixa(scene) {
 					obj.position.x = 12;
 					obj.position.y = 50;
 					obj.position.z = scale / 2.0;
-					//obj.rotateX(grausParaRadianos(90));
-					//obj.rotateY(grausParaRadianos(90));
-					//obj.translateZ(-200);
-					//obj.translateX(-250);
 					scene.add(obj);
 
 				});
@@ -973,7 +969,7 @@ function main() {
 	//Repetição da textura de area
 	sandTexture.wrapS = THREE.RepeatWrapping;
 	sandTexture.wrapT = THREE.RepeatWrapping;
-	sandTexture.repeat.set(300, 300);
+	sandTexture.repeat.set(275, 275);
 
 	// create the ground plane
 	var planeGeometry = new THREE.PlaneGeometry(200, 200, 40, 40);
@@ -1032,17 +1028,7 @@ function main() {
 	var skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
 	skybox.rotateX(grausParaRadianos(90));
 	scene.add(skybox);
-
-	var logoFerrari = textureLoader.load('assets/textures/ferrari_logo.jpg');
-	const testGeometry = new THREE.PlaneGeometry(1, 1, 32);
-	const testMaterial = new THREE.MeshLambertMaterial({ map: logoFerrari, side: THREE.DoubleSide });
-	const testPlane = new THREE.Mesh(testGeometry, testMaterial);
-	//testPlane.translate(100,100,10);
-	testPlane.translateX(100);
-	testPlane.translateY(100);
-	testPlane.translateZ(0.5);
-	testPlane.rotateX(grausParaRadianos(90));
-	scene.add(testPlane);
+	
 
 	// Cria o kart
 	var kart = new Kart();
